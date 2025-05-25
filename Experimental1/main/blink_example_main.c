@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //  #include <stdio.h>                      // Standard input/output functions (not strictly needed here)
 #include "freertos/FreeRTOS.h"          // FreeRTOS main header
 #include "freertos/task.h"              // FreeRTOS task functions (for vTaskDelay)
@@ -6,6 +7,16 @@
 
 #define BLINK_GPIO 2           // The GPIO pin number connected to your LED (change if needed)
 #define BLINK_PERIOD_MS 300   // Blink interval in milliseconds (1000ms = 1 second)
+=======
+#include <stdio.h>                      // Standard input/output functions (not strictly needed here)
+#include "freertos/FreeRTOS.h"          // FreeRTOS main header
+#include "freertos/task.h"              // FreeRTOS task functions (for vTaskDelay)
+#include "driver/gpio.h"                // ESP32 GPIO functions
+#include "esp_log.h"                    // ESP32 logging (not used in this example, but often included)
+
+#define BLINK_GPIO 2           // The GPIO pin number connected to your LED (change if needed)
+#define BLINK_PERIOD_MS 1   // Blink interval in milliseconds (1000ms = 1 second)
+>>>>>>> 18817fe438f9f1adf4c181c6acfdb28eebc9be08
 
 void app_main(void)
 {

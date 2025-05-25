@@ -119,9 +119,12 @@
 43	265	7698661386738781	C:/Users/User/Documents/codesForESP32/Experimental1/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
 67	236	7698662161784285	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
 67	236	7698662161784285	C:/Users/User/Documents/codesForESP32/Experimental1/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
+<<<<<<< HEAD
 74	289	7698685653926489	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
 74	289	7698685653926489	C:/Users/User/Documents/codesForESP32/Experimental1/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
 73	300	7698707792920881	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
 73	300	7698707792920881	C:/Users/User/Documents/codesForESP32/Experimental1/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
 60	231	7698708506047171	esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
 60	231	7698708506047171	C:/Users/User/Documents/codesForESP32/Experimental1/build/bootloader/esp-idf/esptool_py/CMakeFiles/bootloader_check_size	e1a36e2805fdf6f8
+=======
+>>>>>>> 18817fe438f9f1adf4c181c6acfdb28eebc9be08
