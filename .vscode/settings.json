@@ -1,4 +1,5 @@
 {
     "idf.portWin": "COM5",
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "cmake.sourceDirectory": "C:/Users/User/Documents/codesForESP32/Experimental1"
 }
