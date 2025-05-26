@@ -1,10 +1,11 @@
+#include <stdbool.h>
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
-#include <stdbool.h>
 
 #define GPIO_LED_PIN 2
-#define DELAY_TIME 10
+#define DELAY_TIME 1000
 
 void switch_led(bool state) {                  // TRUE turns ON the LED, FALSE turns OFF
     if (state == true) {
@@ -16,37 +17,46 @@ void switch_led(bool state) {                  // TRUE turns ON the LED, FALSE t
 
 void init_led(int pin) {                    // function for initializing the LED
     gpio_reset_pin(pin);
-    gpio_set_direction(GPIO_MODE_OUTPUT);
+    gpio_set_direction(pin, GPIO_MODE_OUTPUT);
 }
 
-bool read_the_Input(void) {                 // function returns TRUE if input ON, and FALSE if OFF
-    char inputString[];
-    scanf("%s", inputString);
+bool read_the_Input(bool *newState) {                 
+    char inputString[10];
+    scanf("%9s", inputString);
 
-    if ((inputString == "ON") || (inputString == "on") || (inputString == "On")) {
+    if ((strcmp(inputString, "ON") == 0) || 
+        (strcmp(inputString, "on") == 0) || 
+        (strcmp(inputString, "On") == 0)) {
+        *newState = true;
         return true;
-    } else if ((inputString == "OFF") || (inputString == "off") || (inputString == "Off")) {
+    } else if ((strcmp(inputString, "OFF") == 0) || 
+               (strcmp(inputString, "off") == 0) || 
+               (strcmp(inputString, "Off") == 0)) {
+        *newState = false;
+        return true;
+    } else {
+        printf("Invalid input! Please type ON or OFF.\n");
         return false;
     }
 }
 
 void app_main(void) {
     init_led(GPIO_LED_PIN);
-    bool inputAction = false;
+    bool ledState = false;
 
     printf("Turning LED on - ON \n Turning LED off - OFF \n");
 
     while(1) {
-        inputAction = read_the_Input();
+        bool validInput = read_the_Input(&ledState);
 
-        if (inputAction == true) {
-            printf("LED is turned ON\n");
-        } else if (inputAction == false) {
-            printf("LED is turned OFF");
+        if (validInput) {
+            if (ledState) {
+                printf("LED is turned ON\n");
+            } else {
+                printf("LED is turned OFF\n");
+            }
+            switch_led(ledState);
         }
-
-        switch_led(inputAction);
-
         vTaskDelay(DELAY_TIME / portTICK_PERIOD_MS);
     }
 }
