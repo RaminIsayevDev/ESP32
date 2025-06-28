@@ -1,0 +1,8 @@
+/home/ramin/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/../lib/gcc/xtensa-esp-elf/14.2.0/../../../../xtensa-esp-elf/bin/ld: esp-idf/freertos/libfreertos.a(app_startup.c.obj):(.literal.main_task+0x24): undefined reference to `app_main'
+/home/ramin/.espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin/../lib/gcc/xtensa-esp-elf/14.2.0/../../../../xtensa-esp-elf/bin/ld: esp-idf/freertos/libfreertos.a(app_startup.c.obj): in function `main_task':
+/home/ramin/ESP/esp-idf/components/freertos/app_startup.c:206:(.text.main_task+0x95): undefined reference to `app_main'
+collect2: error: ld returned 1 exit status
+make[3]: *** [CMakeFiles/example1.elf.dir/build.make:575: example1.elf] Error 1
+make[2]: *** [CMakeFiles/Makefile2:3180: CMakeFiles/example1.elf.dir/all] Error 2
+make[1]: *** [CMakeFiles/Makefile2:3065: CMakeFiles/flash.dir/rule] Error 2
+make: *** [Makefile:286: flash] Error 2

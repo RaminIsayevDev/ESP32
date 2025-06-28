@@ -1,0 +1,156 @@
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6276
+load:0x40078000,len:15736
+load:0x40080400,len:4
+load:0x40080404,len:3860
+entry 0x4008063c
+[0;32mI (29) boot: ESP-IDF v5.4.2-dirty 2nd stage bootloader[0m
+[0;32mI (29) boot: compile time Jun 28 2025 15:51:40[0m
+[0;32mI (30) boot: Multicore bootloader[0m
+[0;32mI (31) boot: chip revision: v3.1[0m
+[0;32mI (34) boot.esp32: SPI Speed      : 40MHz[0m
+[0;32mI (38) boot.esp32: SPI Mode       : DIO[0m
+[0;32mI (41) boot.esp32: SPI Flash Size : 2MB[0m
+[0;32mI (45) boot: Enabling RNG early entropy source...[0m
+[0;32mI (49) boot: Partition Table:[0m
+[0;32mI (52) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (58) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (65) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (71) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (78) boot: End of partition table[0m
+[0;32mI (81) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=18b10h (101136) map[0m
+[0;32mI (123) esp_image: segment 1: paddr=00028b38 vaddr=3ff80000 size=0001ch (    28) load[0m
+[0;32mI (124) esp_image: segment 2: paddr=00028b5c vaddr=3ffb0000 size=03fc8h ( 16328) load[0m
+[0;32mI (133) esp_image: segment 3: paddr=0002cb2c vaddr=40080000 size=034ech ( 13548) load[0m
+[0;32mI (140) esp_image: segment 4: paddr=00030020 vaddr=400d0020 size=844c4h (541892) map[0m
+[0;32mI (327) esp_image: segment 5: paddr=000b44ec vaddr=400834ec size=143fch ( 82940) load[0m
+[0;32mI (371) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (371) boot: Disabling RNG early entropy source...[0m
+[0;32mI (382) cpu_start: Multicore app[0m
+[0;32mI (390) cpu_start: Pro cpu start user code[0m
+[0;32mI (390) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (390) app_init: Application information:[0m
+[0;32mI (390) app_init: Project name:     WifiStationExample[0m
+[0;32mI (395) app_init: App version:      1[0m
+[0;32mI (398) app_init: Compile time:     Jun 28 2025 16:06:48[0m
+[0;32mI (403) app_init: ELF file SHA256:  f0e6d67a9...[0m
+[0;32mI (408) app_init: ESP-IDF:          v5.4.2-dirty[0m
+[0;32mI (412) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (416) efuse_init: Max chip rev:     v3.99 [0m
+[0;32mI (420) efuse_init: Chip rev:         v3.1[0m
+[0;32mI (424) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (430) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM[0m
+[0;32mI (435) heap_init: At 3FFB8048 len 00027FB8 (159 KiB): DRAM[0m
+[0;32mI (440) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM[0m
+[0;32mI (446) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM[0m
+[0;32mI (451) heap_init: At 400978E8 len 00008718 (33 KiB): IRAM[0m
+[0;32mI (458) spi_flash: detected chip: generic[0m
+[0;32mI (460) spi_flash: flash io: dio[0m
+[0;33mW (463) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.[0m
+[0;32mI (476) main_task: Started on CPU0[0m
+[0;32mI (486) main_task: Calling app_main()[0m
+[0;32mI (516) wifi:wifi driver task: 3ffbff70, prio:23, stack:6656, core=0[0m
+[0;32mI (526) wifi:wifi firmware version: bea31f3[0m
+[0;32mI (526) wifi:wifi certification version: v7.0[0m
+[0;32mI (526) wifi:config NVS flash: enabled[0m
+[0;32mI (526) wifi:config nano formatting: disabled[0m
+[0;32mI (536) wifi:Init data frame dynamic rx buffer num: 32[0m
+[0;32mI (536) wifi:Init static rx mgmt buffer num: 5[0m
+[0;32mI (536) wifi:Init management short buffer num: 32[0m
+[0;32mI (546) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (546) wifi:Init static rx buffer size: 1600[0m
+[0;32mI (556) wifi:Init static rx buffer num: 10[0m
+[0;32mI (556) wifi:Init dynamic rx buffer num: 32[0m
+[0;32mI (566) wifi_init: rx ba win: 6[0m
+[0;32mI (566) wifi_init: accept mbox: 6[0m
+[0;32mI (566) wifi_init: tcpip mbox: 32[0m
+[0;32mI (566) wifi_init: udp mbox: 6[0m
+[0;32mI (576) wifi_init: tcp mbox: 6[0m
+[0;32mI (576) wifi_init: tcp tx win: 5760[0m
+[0;32mI (576) wifi_init: tcp rx win: 5760[0m
+[0;32mI (586) wifi_init: tcp mss: 1440[0m
+[0;32mI (586) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (586) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;32mI (596) phy_init: phy_version 4860,6b7a6e5,Feb  6 2025,14:47:07[0m
+[0;32mI (686) wifi:mode : sta (5c:01:3b:6c:30:98)[0m
+[0;32mI (686) wifi:enable tsf[0m
+[0;32mI (686) WIFI_EXAMPLE: Wi-Fi initialization complete. Waiting for connection...[0m
+[0;32mI (686) WIFI_EXAMPLE: Wi-Fi station started. Connecting to AP...[0m
+Led is turned on
+[0;32mI (696) main_task: Returned from app_main()[0m
+[0;32mI (696) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (706) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (716) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (726) wifi:state: assoc -> run (0x10)[0m
+Led is turned off
+Led is turned on
+Led is turned off
+Led is turned on
+Led is turned off
+Led is turned on
+[0;32mI (6836) wifi:state: run -> init (0xfc0)[0m
+[0;32mI (6856) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (6856) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+Led is turned off
+Led is turned on
+[0;32mI (9276) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+[0;32mI (9286) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (9286) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (9296) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (9306) wifi:state: assoc -> run (0x10)[0m
+Led is turned off
+Led is turned on
+Led is turned off
+Led is turned on
+Led is turned off
+Led is turned on
+[0;32mI (15466) wifi:state: run -> init (0xfc0)[0m
+[0;32mI (15476) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (15476) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+Led is turned off
+Led is turned on
+Led is turned off
+[0;32mI (17896) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+[0;32mI (17906) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (17906) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (17916) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (17926) wifi:state: assoc -> run (0x10)[0m
+Led is turned on
+Led is turned off
+Led is turned on
+Led is turned off
+Led is turned on
+Led is turned off
+[0;32mI (24046) wifi:state: run -> init (0xfc0)[0m
+[0;32mI (24056) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (24056) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+Led is turned on
+Led is turned off
+[0;32mI (26476) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+[0;32mI (26486) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (26486) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (26496) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (26506) wifi:state: assoc -> run (0x10)[0m
+Led is turned on
+Led is turned off
+Led is turned on
+Led is turned off
+Led is turned on
+Led is turned off
+[0;32mI (32616) wifi:state: run -> init (0xfc0)[0m
+[0;32mI (32626) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (32626) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+Led is turned on
+Led is turned off
+Led is turned on
+[0;32mI (35046) WIFI_EXAMPLE: Wi-Fi disconnected. Retrying to connect...[0m
+[0;32mI (35056) wifi:new:<1,0>, old:<1,0>, ap:<255,255>, sta:<1,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (35056) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (35066) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (35076) wifi:state: assoc -> run (0x10)[0m
+[0;32mI (35196) wifi:connected with ALHN-3405, aid = 1, chann
