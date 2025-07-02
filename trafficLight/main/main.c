@@ -6,10 +6,11 @@
 #define led_YELLOW GPIO_NUM_4
 #define led_GREEN GPIO_NUM_6
 
-#define delay_Time_between_blinks 1000
+#define delay_Time_between_blinks 1500
 #define delay_Time_RED 5000
 #define delay_Time_YELLOW 2000
 #define delay_Time_GREEN 4000
+#define delay_Time_blinking_GREEN_led 1000
 
 void init_led(int pin) {
     gpio_reset_pin(pin);
@@ -39,11 +40,30 @@ void Task1_blink_traffic_lights(void *pvParameters) {
         gpio_set_level(led_GREEN, 1);      // Turn ON the GREEN led
         delay(delay_Time_GREEN);
 
-        delay(delay_Time_between_blinks);   // Turn OFF the GREEN led
+        delay(delay_Time_between_blinks);   // Turn OFF the GREEN led and start to blinking
         gpio_set_level(led_GREEN, 0);
+
+        for(int i = 0; i < 5; i++) {
+            gpio_set_level(led_GREEN, 1);
+            delay(delay_Time_blinking_GREEN_led);
+            gpio_set_level(led_GREEN, 0);
+            delay(delay_Time_blinking_GREEN_led)
+        }
+
     }
 }
 
 void app_main(void) {
-    
+    init_led(led_RED);
+    init_led(led_YELLOW);
+    init_led(led_GREEN);
+
+    xTaskCreate(
+        Task1_blink_traffic_lights,
+        "Task1_blink_traffic_lights",
+        2048,
+        NULL,
+        5,
+        NULL
+    );
 }
