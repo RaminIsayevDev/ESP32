@@ -4,7 +4,7 @@
 
 #define led_RED GPIO_NUM_2
 #define led_YELLOW GPIO_NUM_4
-#define led_GREEN GPIO_NUM_6
+#define led_GREEN GPIO_NUM_5
 
 #define delay_Time_between_blinks 1500
 #define delay_Time_RED 5000
@@ -47,7 +47,7 @@ void Task1_blink_traffic_lights(void *pvParameters) {
             gpio_set_level(led_GREEN, 1);
             delay(delay_Time_blinking_GREEN_led);
             gpio_set_level(led_GREEN, 0);
-            delay(delay_Time_blinking_GREEN_led)
+            delay(delay_Time_blinking_GREEN_led);
         }
 
     }
