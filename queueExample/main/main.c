@@ -89,8 +89,6 @@ int main(void) {
                     2,             // У получателя приоритет выше
                     NULL);
 
-        // Запускаем планировщик.
-        vTaskStartScheduler();
     } else {
         // Не удалось создать очередь.
         printf("Queue could not be created.\n");
