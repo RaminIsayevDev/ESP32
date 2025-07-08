@@ -143,25 +143,26 @@ void time_processing_task(void *pvParameters) {
     }
 }
 
-// Вспомогательная функция для зажигания одной цифры на дисплее
+// Вспомогательная функция для зажигания одной цифры на дисплее (ОБЩИЙ КАТОД - ИСПРАВЛЕНО)
 void display_digit(int digit_pos, int number) {
-    // Выключаем все разряды
+    // Выключаем все разряды, подавая на них высокий уровень (HIGH)
     for (int i = 0; i < 4; i++) {
-        gpio_set_level(digit_pins[i], 0); // Для общего катода 0 - выключен
+        gpio_set_level(digit_pins[i], 1); 
     }
 
-    // Устанавливаем сегменты для нужной цифры
+    // Устанавливаем сегменты для нужной цифры (подаем HIGH на нужные сегменты)
+    // Эта часть была правильной
     uint8_t segments = segment_map[number];
     for (int i = 0; i < 8; i++) {
+        // Устанавливаем 0 на все сегменты перед отрисовкой новой цифры
+        gpio_set_level(segment_pins[i], 0);
         if ((segments >> i) & 1) {
             gpio_set_level(segment_pins[i], 1);
-        } else {
-            gpio_set_level(segment_pins[i], 0);
         }
     }
     
-    // Включаем нужный разряд
-    gpio_set_level(digit_pins[digit_pos], 1); // 1 - включен
+    // Включаем нужный разряд, подавая на него низкий уровень (LOW)
+    gpio_set_level(digit_pins[digit_pos], 0); 
 }
 
 // --- ЗАДАЧА 3: ОТОБРАЖЕНИЕ НА 7-СЕГМЕНТНОМ ИНДИКАТОРЕ ---
