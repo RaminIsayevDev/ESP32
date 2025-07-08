@@ -166,36 +166,36 @@ void display_digit(int digit_pos, int number) {
 }
 
 // --- ЗАДАЧА 3: ОТОБРАЖЕНИЕ НА 7-СЕГМЕНТНОМ ИНДИКАТОРЕ ---
+// --- ЗАДАЧА 3: ОТОБРАЖЕНИЕ (ИСПРАВЛЕННАЯ ВЕРСИЯ) ---
 void display_task(void *pvParameters) {
-    // 1. Настройка GPIO
-    for (int i = 0; i < 8; i++) {
-        gpio_reset_pin(segment_pins[i]);
-        gpio_set_direction(segment_pins[i], GPIO_MODE_OUTPUT);
-    }
-    for (int i = 0; i < 4; i++) {
-        gpio_reset_pin(digit_pins[i]);
-        gpio_set_direction(digit_pins[i], GPIO_MODE_OUTPUT);
-    }
+    // ... (код инициализации GPIO) ...
 
     display_data_t current_display_data;
-    // Начальное значение, пока не получили время (например, "88:88")
-    memset(current_display_data.digits, 8, sizeof(current_display_data.digits));
+    memset(&current_display_data, 0, sizeof(display_data_t));
+    current_display_data.digits[0] = 8;
+    current_display_data.digits[1] = 8;
+    current_display_data.digits[2] = 8;
+    current_display_data.digits[3] = 8;
+
 
     while (1) {
-        // 2. Проверка Queue 2 на наличие новых данных (НЕБЛОКИРУЮЩАЯ)
-        // Это важно, чтобы не останавливать мультиплексирование
+        // Проверка Queue 2 на наличие новых данных (неблокирующая)
         if (xQueueReceive(queue2_display_digits, &current_display_data, 0) == pdPASS) {
-             ESP_LOGI(TAG_DISP, "New display data received.");
+             ESP_LOGI(TAG_DISP, "New display data received. Colon: %d", current_display_data.show_colon);
         }
 
-        // 3. Мультиплексирование дисплея
+        // Мультиплексирование дисплея
         for (int i = 0; i < 4; i++) {
-            display_digit(i, current_display_data.digits[i]);
-            // Небольшая задержка для эффекта постоянного свечения (Persistence of Vision)
+            display_digit(i, current_display_data.digits[i], current_display_data.show_colon);
+            
+            // !!! ВОТ КЛЮЧЕВАЯ СТРОКА !!!
+            // Эта функция создает паузу в 5 миллисекунд и, что самое главное,
+            // отдает управление планировщику FreeRTOS, чтобы могли работать другие задачи.
             vTaskDelay(pdMS_TO_TICKS(5)); 
         }
     }
 }
+
 
 // --- ГЛАВНАЯ ФУНКЦИЯ ---
 void app_main(void) {
