@@ -1,0 +1,41 @@
+dependencies:
+  idf:
+    source:
+      type: idf
+    version: 5.4.2
+  k0i05/esp_bmp280:
+    component_hash: 23edaefd51b71f2f225d942d1956d3a494f659c494eb635d28b8e5df7aa8281c
+    dependencies:
+    - name: idf
+      require: private
+      version: '>5.3.0'
+    - name: k0i05/esp_type_utils
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=1.0.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    targets:
+    - esp32
+    - esp32s3
+    version: 1.2.6
+  k0i05/esp_type_utils:
+    component_hash: 0315aa7577c96037b601be7499c4b434d32d4ae381e90308ac0da3323e3887dc
+    dependencies:
+    - name: idf
+      require: private
+      version: '>5.3.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    targets:
+    - esp32
+    - esp32s3
+    version: 1.2.6
+direct_dependencies:
+- idf
+- k0i05/esp_bmp280
+manifest_hash: d32679d6feaa695a12554815900f0895b2bf6f4da9d483bff3d16e34a38d6e8c
+target: esp32
+version: 2.0.0

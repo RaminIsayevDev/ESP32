@@ -19,8 +19,10 @@ static bool sntp_started = false;
 i2c_master_bus_handle_t i2c_bus = NULL;
 void sntp_task(void *pvParameters);
 void RTC_task(void *pvParameters);
+void display_task(void *pvParameters);
 QueueHandle_t queue_SNTP_to_RTC_data;
 tm1637_led_t *led = NULL;  // Глобальная переменная
+struct tm RTC_timeinfo = {0};
 
 void my_wifi_connected_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
   if (event_id == WIFI_EVENT_STA_CONNECTED) {
@@ -149,28 +151,40 @@ void RTC_task(void *pvParameters) { // Task for set, save and output time when n
 
   rtc_handle_t *rtc = ds3231_init(&i2c_bus);
 
-  struct tm RTC_timeinfo = {0};
+  
   float temp = 0;
 
   if (xQueueReceive(queue_SNTP_to_RTC_data, &RTC_timeinfo, portMAX_DELAY) == pdTRUE) {
     //printf("Received: %d\n", received_value);
     ESP_ERROR_CHECK(ds3231_time_tm_set(rtc, RTC_timeinfo));
+    xTaskCreate(display_task, "display_time", 1024, NULL, 10, NULL);
   }
 
-  // Пока что не подключаем дисплей, поэтому ответственность за выведение времени ложится
-  // на эту задачу
   while(1) {
     struct tm* current_time = ds3231_time_get(rtc);
     RTC_timeinfo = *current_time;
     free(current_time);
     temp = ds3231_temperature_get(rtc);
-    int hour = RTC_timeinfo.tm_hour;
-    int minute = RTC_timeinfo.tm_min;
+    
     printf("%04d-%02d-%02d %02d:%02d:%02d Temp: %.2f\n", RTC_timeinfo.tm_year + 1900 /*Add 1900 for better readability*/, RTC_timeinfo.tm_mon + 1,
             RTC_timeinfo.tm_mday, RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, RTC_timeinfo.tm_sec, temp);
-    int display_value = hour * 100 + minute;
-    tm1637_set_number(led, display_value, true, 0x04);  // 0x04 - двоеточие между 2 и 3 цифрой
     vTaskDelay(pdMS_TO_TICKS(60000));
+  }
+}
+
+void display_task(void* pvParameters) {
+  while(1) {
+    
+    int hour = RTC_timeinfo.tm_hour;
+    int minute = RTC_timeinfo.tm_min;
+
+    int display_value = hour * 100 + minute;
+
+    tm1637_set_number(led, display_value, true, 0x04); // colon ON
+    vTaskDelay(pdMS_TO_TICKS(500));
+
+    tm1637_set_number(led, display_value, true, 0);    // colon OFF
+    vTaskDelay(pdMS_TO_TICKS(500));
   }
 }
 
