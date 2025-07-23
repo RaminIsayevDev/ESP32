@@ -21,7 +21,7 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)SPI3_HOST, &io_config, &io_handle));
 
     // Create LCD panel handle for ST7789, with the SPI IO device handle
-    ESP_ERROR_CHECK(esp_lcd_new_panel_st7735(io_handle, &panel_config, &panel_handle));
+    ESP_ERROR_CHECK(esp_lcd_new_panel_generic(io_handle, &panel_config, &panel_handle));
 
     xTaskCreate(LCD_Display_Task, "Display_LCD", 4096, NULL, 5, NULL);
 }
