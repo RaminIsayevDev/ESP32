@@ -24,13 +24,17 @@ void LCD_Display_Task(void* pvParameters) {
     // Send positive and negative gammas'
     st7735s_send_gamma_profile(GAMMA_P_ARRAY, GAMMA_P_ARRAY_LEN, GAMMA_N_ARRAY, GAMMA_N_ARRAY_LEN);
 
-    lv_color_t blue_color = lv_color_make(0, 0, 255);  // Pure blue
-
     lv_obj_t *screen = lv_scr_act();  // Get current screen
 
-    lv_obj_set_style_bg_color(screen, lv_color_make(0, 0, 255), 0);
+    lv_obj_set_style_bg_color(screen, lv_color_make(255, 0, 0), 0);
     lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
 
+    lv_obj_t* label = lv_label_create(screen);
+    lv_label_set_text(label, "Hello, ESP32 + ST7735!");
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_text_color(label, lv_color_black(), 0);
+    lv_obj_set_width(label, 100);  // Ограничь ширину, например, 100 пикселей
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);  // Включи перенос строк
 
     while(1) {
         lv_timer_handler();  // Process LVGL tasks
