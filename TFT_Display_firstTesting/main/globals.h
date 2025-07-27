@@ -5,32 +5,29 @@
 #include "esp_lcd_panel_dev.h"
 #include "driver/spi_master.h"
 #include "esp_lcd_panel_io.h"
+#include "lvgl.h"
+#include "lvgl_helpers.h"
 
 // Define Pins
 
-extern const gpio_num_t SCLK_PIN;
-extern const gpio_num_t MISO_PIN;
-extern const gpio_num_t MOSI_PIN;
-extern const gpio_num_t CS_PIN;
-extern const gpio_num_t RST_PIN;
-extern const gpio_num_t DC_PIN;
-extern const gpio_num_t BKL_PIN;
+#define SCLK_PIN 18
+#define MISO_PIN 19
+#define MOSI_PIN 23
+#define CS_PIN 5
+#define RST_PIN 16
+#define DC_PIN 17
+#define BKL_PIN 22
 
 // Define Variables
 
-extern const uint8_t ST7735S_GMCTRP1_CMD;
-extern const uint8_t ST7735S_GMCTRN1_CMD;
+extern const int BUFFER_SIZE;
 
-extern const int LCD_H_RES;
-extern const int LCD_V_RES;
+extern lv_disp_drv_t disp_drv;
 
 extern const uint8_t GAMMA_P_ARRAY_LEN;
 extern const uint8_t GAMMA_N_ARRAY_LEN;
 
-extern esp_lcd_panel_io_handle_t io_handle;
-extern esp_lcd_panel_handle_t panel_handle;
-
-extern const int LINE_BUFFER_HEIGHT;
+extern const int DISP_BUF_LINES;
 
 // Define structures and arrays
 

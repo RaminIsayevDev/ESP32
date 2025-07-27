@@ -1,27 +1,38 @@
 #include <freertos/FreeRTOS.h>
 #include "freertos/task.h"
+
 // #include "driver/gpio.h"
-#include "driver/spi_master.h"
-#include "esp_lcd_io_spi.h"
-#include "esp_lcd_panel_dev.h"
 #include "esp_err.h"      
-#include "esp_lcd_panel_ops.h"
+#include "lvgl.h"
+#include "st7735s.h"
+
 // My libraries
 #include "globals.h"
 #include "functions.h"
 
-
+#define DISP_BUF_LINES 40  // Кол-во строк буфера (или подбери своё)
+#define LVGL_BUF_SIZE (LV_HOR_RES_MAX * DISP_BUF_LINES)
 
 void app_main(void) {
 
-    // First we need to initialize SPI bus
-    ESP_ERROR_CHECK(spi_bus_initialize(SPI3_HOST, &bus_config, SPI_DMA_CH_AUTO));
+    static lv_disp_draw_buf_t draw_buf;       // ✅ Структура буфера LVGL
+    static lv_color_t buf1[LVGL_BUF_SIZE];   
+    
+    
+    lv_init();
 
-    // Attach the LCD to the SPI bus
-    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)SPI3_HOST, &io_config, &io_handle));
+    lvgl_driver_init();
 
-    // Create LCD panel handle for ST7789, with the SPI IO device handle
-    ESP_ERROR_CHECK(esp_lcd_new_panel_generic(io_handle, &panel_config, &panel_handle));
+    st7735s_init();
+
+    lv_disp_draw_buf_init(&draw_buf, &buf1, NULL, LV_HOR_RES_MAX * DISP_BUF_LINES);
+
+    lv_disp_drv_init(&disp_drv);
+    disp_drv.flush_cb = st7735s_flush;
+    disp_drv.hor_res = 128;
+    disp_drv.ver_res = 160;
+    disp_drv.draw_buf = &draw_buf;
+    lv_disp_drv_register(&disp_drv);
 
     xTaskCreate(LCD_Display_Task, "Display_LCD", 4096, NULL, 5, NULL);
 }

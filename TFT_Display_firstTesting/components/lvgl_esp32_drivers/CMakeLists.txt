@@ -1,0 +1,63 @@
+if(ESP_PLATFORM)
+
+file(GLOB SOURCES *.c)
+set(LVGL_INCLUDE_DIRS . lvgl_tft)
+list(APPEND SOURCES "lvgl_tft/disp_driver.c")
+list(APPEND SOURCES "lvgl_tft/esp_lcd_backlight.c")
+
+# Include only the source file of the selected
+# display controller.
+
+if(CONFIG_LV_TFT_DISPLAY_PROTOCOL_SPI)
+    list(APPEND SOURCES "lvgl_tft/disp_spi.c")
+endif()
+
+# Add touch driver to compilation only if it is selected in menuconfig
+if(CONFIG_LV_TOUCH_CONTROLLER)
+    list(APPEND SOURCES "lvgl_touch/touch_driver.c")
+    list(APPEND LVGL_INCLUDE_DIRS lvgl_touch)
+
+    # Include only the source file of the selected
+    # touch controller.
+    if(CONFIG_LV_TOUCH_CONTROLLER_XPT2046)
+        list(APPEND SOURCES "lvgl_touch/xpt2046.c")
+    elseif(CONFIG_LV_TOUCH_CONTROLLER_FT6X06)
+        list(APPEND SOURCES "lvgl_touch/ft6x36.c")
+    elseif(CONFIG_LV_TOUCH_CONTROLLER_STMPE610)
+        list(APPEND SOURCES "lvgl_touch/stmpe610.c")
+    elseif(CONFIG_LV_TOUCH_CONTROLLER_ADCRAW)
+        list(APPEND SOURCES "lvgl_touch/adcraw.c")
+    elseif(CONFIG_LV_TOUCH_CONTROLLER_FT81X)
+        list(APPEND SOURCES "lvgl_touch/FT81x.c")
+    elseif(CONFIG_LV_TOUCH_CONTROLLER_RA8875)
+        list(APPEND SOURCES "lvgl_touch/ra8875_touch.c")
+    elseif(CONFIG_LV_TOUCH_CONTROLLER_GT911)
+        list(APPEND SOURCES "lvgl_touch/gt911.c")
+    endif()
+
+    if(CONFIG_LV_TOUCH_DRIVER_PROTOCOL_SPI)
+        list(APPEND SOURCES "lvgl_touch/tp_spi.c")
+    endif()
+endif()
+
+if(CONFIG_LV_I2C)
+    list(APPEND SOURCES "lvgl_i2c/i2c_manager.c")
+endif()
+
+if("${IDF_VERSION_MAJOR}.${IDF_VERSION_MINOR}" VERSION_GREATER_EQUAL "5.0")
+    idf_component_register( SRCS ${SOURCES}
+                            INCLUDE_DIRS ${LVGL_INCLUDE_DIRS}
+                            REQUIRES lvgl driver)
+    set(USE_PORT_TICK_PERIOD_MS)                            
+else()
+idf_component_register( SRCS ${SOURCES}
+                            INCLUDE_DIRS ${LVGL_INCLUDE_DIRS}
+                            REQUIRES lvgl)  
+    set(USE_PORT_TICK_RATE_MS)                                                            
+endif()
+
+target_compile_definitions(${COMPONENT_LIB} PUBLIC "-DLV_LVGL_H_INCLUDE_SIMPLE")
+
+else()
+    message(FATAL_ERROR "LVGL ESP32 drivers: ESP_PLATFORM is not defined. Try reinstalling ESP-IDF.")
+endif()
