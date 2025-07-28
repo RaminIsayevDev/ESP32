@@ -14,13 +14,6 @@
 extern QueueHandle_t toDisplay_Queue;
 extern QueueHandle_t SNTP_to_RTC_Queue;
 
-// LVGL Labels
-
-extern lv_obj_t* wifi_label;
-extern lv_obj_t* clock_label;
-extern lv_obj_t* temp_label;
-extern lv_obj_t* ssid_label;
-
 // Buffers
 
 #define DISP_BUF_LINES 40

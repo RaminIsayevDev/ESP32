@@ -207,16 +207,16 @@ void display_task(void* pvParameters) {
 
     lv_obj_t *screen = lv_scr_act();  // Get current screen
 
-    wifi_label = lv_label_create(screen);
+    lv_obj_t* wifi_label = lv_label_create(screen);
     lv_obj_align(wifi_label, LV_ALIGN_TOP_LEFT, 10, 10);
 
-    ssid_label = lv_label_create(screen);
+    lv_obj_t* ssid_label = lv_label_create(screen);
     lv_obj_align(ssid_label, LV_ALIGN_TOP_LEFT, 10, 30);
 
-    clock_label = lv_label_create(screen);
+    lv_obj_t* clock_label = lv_label_create(screen);
     lv_obj_align(clock_label, LV_ALIGN_TOP_LEFT, 10, 60);
 
-    temp_label = lv_label_create(screen);
+    lv_obj_t* temp_label = lv_label_create(screen);
     lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, 10, 80);
 
     lv_scr_load(screen);
