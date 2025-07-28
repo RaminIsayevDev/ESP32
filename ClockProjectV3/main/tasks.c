@@ -138,17 +138,38 @@ void sntp_task(void *pvParameters) {
     }
 
     while(1) {
-      xQueueSend(SNTP_to_RTC_Queue, &timeinfo, portMAX_DELAY); 
-      ESP_LOGI("sntp_task", "Succesfully sent data to SNTP_to_RTC_Queue after 1 hour...");
-      vTaskDelay(pdMS_TO_TICKS(3600000));  // 3600000 миллисекунд = 1 час
+        vTaskDelay(pdMS_TO_TICKS(3600000));  // 3600000 миллисекунд = 1 час
+
+        time_t now;
+        struct tm timeinfo_updated;
+        time(&now);
+        localtime_r(&now, &timeinfo_updated); 
+        xQueueSend(SNTP_to_RTC_Queue, &timeinfo_updated, portMAX_DELAY); 
+
+        // Free up memory before sleeping task
+
+        free(&now);
+        free(&timeinfo_updated);
+
+        ESP_LOGI("sntp_task", "Successfully sent updated SNTP data to SNTP_to_RTC_Queue...");
     }
 }
 
 void RTC_Task(void* pvParameters) {
+
   i2c_master_dev_handle_t* rtc_handle = ds3231_init_full(GPIO_NUM_21, GPIO_NUM_22);
 
+  if (rtc_handle == NULL) {
+      ESP_LOGE("RTC_Task", "Failed to initialize DS3231");
+      vTaskDelete(NULL); // Завершить задачу, если инициализация не удалась
+  }
 
   while(1) {
+    struct tm RTC_timeinfo;
+    float temp;
+
+    
+
     if (xQueueReceive(SNTP_to_RTC_Queue, &RTC_timeinfo, portMAX_DELAY) == pdTRUE) {
       ESP_LOGI("RTC_Task", "RTC updating from SNTP...");
       ESP_ERROR_CHECK(ds3231_time_tm_set(rtc_handle, RTC_timeinfo));
@@ -159,7 +180,7 @@ void RTC_Task(void* pvParameters) {
     free(current_time);
     temp = ds3231_temperature_get(rtc_handle);
     
-    printf("%04d-%02d-%02d %02d:%02d:%02d Temp: %.2f\n", RTC_timeinfo.tm_year + 1900 /*Add 1900 for better readability*/, RTC_timeinfo.tm_mon + 1,
+    printf("%04d-%02d-%02d %02d:%02d:%02d Temp: %.1f\n", RTC_timeinfo.tm_year + 1900 /*Add 1900 for better readability*/, RTC_timeinfo.tm_mon + 1,
             RTC_timeinfo.tm_mday, RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, RTC_timeinfo.tm_sec, temp);
 
     DisplayMessage msg;
@@ -175,6 +196,7 @@ void RTC_Task(void* pvParameters) {
 
     xQueueSend(toDisplay_Queue, &msg, portMAX_DELAY);
     ESP_LOGI("RTC_Task", "Succesfully sent to toDisplay_Queue...");
+    ESP_LOGI("RTC_Task", "Set clock: %s, temp: %s", msg.data.clock_temp.time, msg.data.clock_temp.temp);
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
@@ -197,6 +219,8 @@ void display_task(void* pvParameters) {
     temp_label = lv_label_create(screen);
     lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, 10, 80);
 
+    lv_scr_load(screen);
+
     while(1) {
         if (xQueueReceive(toDisplay_Queue, &msg, portMAX_DELAY)) {
             switch (msg.type) {
@@ -210,14 +234,14 @@ void display_task(void* pvParameters) {
                     break;
 
                 case DISPLAY_CLOCK_TEMP:
+                    ESP_LOGI("Display_Task", "Set clock: %s, temp: %s", msg.data.clock_temp.time, msg.data.clock_temp.temp); // For log
                     lv_label_set_text(clock_label, msg.data.clock_temp.time);
                     lv_label_set_text(temp_label, msg.data.clock_temp.temp);
-                    ESP_LOGI("Display_Task", "Time: %s, Temp: %s", msg.data.clock_temp.time, msg.data.clock_temp.temp);
                     break;
             }
         }
     
       lv_timer_handler();  // Process LVGL tasks
-      vTaskDelay(pdMS_TO_TICKS(10));  // Call periodically
+      vTaskDelay(pdMS_TO_TICKS(5));  // Call periodically
     }
 }

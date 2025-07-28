@@ -39,7 +39,8 @@ void app_main(void) {
     static lv_color_t buf1[LVGL_BUF_SIZE]; 
 
     DisplayMessage msg;
-
+    // Create Queues
+    toDisplay_Queue = xQueueCreate(5, sizeof(DisplayMessage));
     SNTP_to_RTC_Queue = xQueueCreate(5, sizeof(struct tm));
 
     lv_init();
@@ -52,8 +53,6 @@ void app_main(void) {
 
     lv_disp_drv_init(&disp_drv);
 
-    disp_drv.rotated = LV_DISP_ROT_90;
-
     disp_drv.flush_cb = st7735s_flush;
     disp_drv.hor_res = 160;
     disp_drv.ver_res = 128;
@@ -63,12 +62,10 @@ void app_main(void) {
 
     st7735s_send_gamma_profile(GAMMA_P_ARRAY, GAMMA_P_ARRAY_LEN, GAMMA_N_ARRAY, GAMMA_N_ARRAY_LEN);
 
-    toDisplay_Queue = xQueueCreate(5, sizeof(DisplayMessage));
-
     // А вот теперь можно запускать задачу:
     xTaskCreate(display_task, "display_task", 4096, NULL, 10, NULL);
 
     // Create wifi_task
-    xTaskCreate(wifi_task, "Wifi task", 4096, NULL, 10, NULL);
+    xTaskCreate(wifi_task, "Wifi task", 4096, NULL, 8, NULL);
 
 }
