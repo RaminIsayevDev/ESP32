@@ -1,0 +1,29 @@
+dependencies:
+  idf:
+    source:
+      type: idf
+    version: 5.5.0
+  jschwefel/esp-idf-ds3231:
+    component_hash: ccc75c80386785c254a306585f3f02dd07ce3bd430b025cf3f96b7c954150be6
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.0.3
+  lvgl/lvgl:
+    component_hash: d7c1ac037ae6e85d94897f807d6e7ba0946a83e720074fc95a4f6241da9f9f53
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 8.4.0
+direct_dependencies:
+- idf
+- jschwefel/esp-idf-ds3231
+- lvgl/lvgl
+manifest_hash: 75928ab3c4881d27e355a156976ba970684c1b33804d3b6b4c5e72384215e13f
+target: esp32
+version: 2.0.0

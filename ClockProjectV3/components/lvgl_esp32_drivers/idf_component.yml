@@ -1,0 +1,6 @@
+license: MIT
+repository: git://github.com/zhw990217/lvgl_esp32_drivers.git
+repository_info:
+  commit_sha: 745fb9d5bbe7102ce27b175e6f734d4cac18e97c
+  path: lvgl_esp32_drivers
+version: 1.0.1
