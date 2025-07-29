@@ -9,6 +9,13 @@
 #include "nvs_flash.h"
 #include "lwip/apps/sntp.h"
 #include "driver/gpio.h"
+#include "driver/i2c_master.h"
+
+i2c_master_bus_handle_t i2c_bus = NULL;
+
+// functions 
+
+
 
 // Handlers
 
@@ -33,6 +40,7 @@ void my_wifi_started_handler(void* arg, esp_event_base_t event_base, int32_t eve
 void my_wifi_disconnected_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     wifi_event_sta_disconnected_t* disconn = (wifi_event_sta_disconnected_t*) event_data;
     ESP_LOGW(TAG, "Disconnected from Wi-Fi. Reason: %d", disconn->reason);
+
 }
 
 void my_wifi_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -132,7 +140,7 @@ void sntp_task(void *pvParameters) {
         ESP_LOGI("sntp_task", "Time synchronized: %s", asctime(&timeinfo));
         xQueueSend(SNTP_to_RTC_Queue, &timeinfo, portMAX_DELAY);
         ESP_LOGI("sntp_task", "Succesfully sent the first SNTP data to SNTP_to_RTC_Queue...");
-        xTaskCreate(RTC_Task, "RTC task", 2048, NULL, 4, NULL);
+        xTaskCreate(RTC_Task, "RTC task", 4096, NULL, 4, NULL);
     } else {
         ESP_LOGW("sntp_task", "Failed to synchronize time");
     }
@@ -146,29 +154,38 @@ void sntp_task(void *pvParameters) {
         localtime_r(&now, &timeinfo_updated); 
         xQueueSend(SNTP_to_RTC_Queue, &timeinfo_updated, portMAX_DELAY); 
 
-        // Free up memory before sleeping task
-
-        free(&now);
-        free(&timeinfo_updated);
-
         ESP_LOGI("sntp_task", "Successfully sent updated SNTP data to SNTP_to_RTC_Queue...");
     }
 }
 
 void RTC_Task(void* pvParameters) {
 
-  i2c_master_dev_handle_t* rtc_handle = ds3231_init_full(GPIO_NUM_21, GPIO_NUM_22);
+  i2c_master_bus_config_t i2c_bus_config = {
+    .clk_source = I2C_CLK_SRC_DEFAULT,
+    .i2c_port = I2C_NUM_0,
+    .scl_io_num = SCL_PIN,
+    .sda_io_num = SDA_PIN,
+    .glitch_ignore_cnt = 7,
+    .flags.enable_internal_pullup = true,
+  };
+
+  ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &i2c_bus));
+
+  ESP_LOGI("RTC_Task", "I2C master bus initialized");
+
+  rtc_handle_t *rtc_handle = ds3231_init(&i2c_bus);
 
   if (rtc_handle == NULL) {
       ESP_LOGE("RTC_Task", "Failed to initialize DS3231");
       vTaskDelete(NULL); // Завершить задачу, если инициализация не удалась
+      return;
   }
+
+  ESP_LOGI("RTC_Task", "DS3231 succesfully initialized");
 
   while(1) {
     struct tm RTC_timeinfo;
     float temp;
-
-    
 
     if (xQueueReceive(SNTP_to_RTC_Queue, &RTC_timeinfo, portMAX_DELAY) == pdTRUE) {
       ESP_LOGI("RTC_Task", "RTC updating from SNTP...");
@@ -180,8 +197,8 @@ void RTC_Task(void* pvParameters) {
     free(current_time);
     temp = ds3231_temperature_get(rtc_handle);
     
-    printf("%04d-%02d-%02d %02d:%02d:%02d Temp: %.1f\n", RTC_timeinfo.tm_year + 1900 /*Add 1900 for better readability*/, RTC_timeinfo.tm_mon + 1,
-            RTC_timeinfo.tm_mday, RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, RTC_timeinfo.tm_sec, temp);
+    //printf("%04d-%02d-%02d %02d:%02d:%02d Temp: %.1f\n", RTC_timeinfo.tm_year + 1900 /*Add 1900 for better readability*/, RTC_timeinfo.tm_mon + 1,
+    //        RTC_timeinfo.tm_mday, RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, RTC_timeinfo.tm_sec, temp);
 
     DisplayMessage msg;
     msg.type = DISPLAY_CLOCK_TEMP;
@@ -195,15 +212,12 @@ void RTC_Task(void* pvParameters) {
          temp);
 
     xQueueSend(toDisplay_Queue, &msg, portMAX_DELAY);
-    ESP_LOGI("RTC_Task", "Succesfully sent to toDisplay_Queue...");
-    ESP_LOGI("RTC_Task", "Set clock: %s, temp: %s", msg.data.clock_temp.time, msg.data.clock_temp.temp);
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
 
 void display_task(void* pvParameters) {
     DisplayMessage msg;
-    struct tm timeinfo;
 
     lv_obj_t *screen = lv_scr_act();  // Get current screen
 
@@ -222,25 +236,29 @@ void display_task(void* pvParameters) {
     lv_scr_load(screen);
 
     while(1) {
-        if (xQueueReceive(toDisplay_Queue, &msg, portMAX_DELAY)) {
-            switch (msg.type) {
-                case DISPLAY_WIFI_STATUS:
-                    if (msg.data.wifi_status.connected) {
-                        lv_label_set_text(wifi_label, "WiFi: Connected");
-                        lv_label_set_text(ssid_label, msg.data.wifi_status.ssid);
-                    } else {
-                        lv_label_set_text(wifi_label, "WiFi: Connecting...");
-                    }
-                    break;
-
-                case DISPLAY_CLOCK_TEMP:
-                    ESP_LOGI("Display_Task", "Set clock: %s, temp: %s", msg.data.clock_temp.time, msg.data.clock_temp.temp); // For log
-                    lv_label_set_text(clock_label, msg.data.clock_temp.time);
-                    lv_label_set_text(temp_label, msg.data.clock_temp.temp);
-                    break;
+      // Проверяем, есть ли что-то в очереди (не извлекая)
+      if(uxQueueMessagesWaiting(toDisplay_Queue) > 0) {
+        // Тогда уже достаём сообщение
+        if(xQueueReceive(toDisplay_Queue, &msg, 0) == pdTRUE) {
+          switch (msg.type)
+          {
+          case DISPLAY_WIFI_STATUS:
+            if (msg.data.wifi_status.connected) {
+              lv_label_set_text(wifi_label, "WiFi: Connected");
+              lv_label_set_text(ssid_label, msg.data.wifi_status.ssid);
+            } else {
+              lv_label_set_text(wifi_label, "WiFi: Connecting...");
             }
+            break;
+          
+          case DISPLAY_CLOCK_TEMP:
+            lv_label_set_text(clock_label, msg.data.clock_temp.time);
+            lv_label_set_text(temp_label, msg.data.clock_temp.temp);
+            break;
+          }
         }
-    
+      }
+
       lv_timer_handler();  // Process LVGL tasks
       vTaskDelay(pdMS_TO_TICKS(5));  // Call periodically
     }

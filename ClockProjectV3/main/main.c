@@ -63,7 +63,7 @@ void app_main(void) {
     st7735s_send_gamma_profile(GAMMA_P_ARRAY, GAMMA_P_ARRAY_LEN, GAMMA_N_ARRAY, GAMMA_N_ARRAY_LEN);
 
     // А вот теперь можно запускать задачу:
-    xTaskCreate(display_task, "display_task", 4096, NULL, 10, NULL);
+    xTaskCreate(display_task, "display_task", 6144, NULL, 10, NULL);
 
     // Create wifi_task
     xTaskCreate(wifi_task, "Wifi task", 4096, NULL, 8, NULL);

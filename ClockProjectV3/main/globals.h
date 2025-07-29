@@ -6,6 +6,7 @@
 
 #include "lvgl.h"
 #include "st7735s.h"
+#include "driver/gpio.h"
 
 #include "stdbool.h"
 
@@ -28,6 +29,11 @@ extern QueueHandle_t SNTP_to_RTC_Queue;
 #define RST_PIN 16
 #define DC_PIN 17
 #define BKL_PIN 24
+
+// define pins for I2C
+
+#define SDA_PIN GPIO_NUM_21
+#define SCL_PIN GPIO_NUM_22
 
 // Displey driver
 
