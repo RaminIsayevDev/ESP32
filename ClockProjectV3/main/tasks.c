@@ -362,6 +362,7 @@ void display_task(void* pvParameters) {
   create_main_screen();
 
   xTaskCreate(lvgl_main_task, "LVGL_TIMER_HANDLER", 4092, NULL, 10, NULL);
+  xtaskCreate(wifi_task, "WIFI_TASK", 2048, NULL, 5, NULL);
   
   while(1) {
     if (xQueueReceive(toDisplay_Queue, &from_RTC, portMAX_DELAY) == pdTRUE) {
