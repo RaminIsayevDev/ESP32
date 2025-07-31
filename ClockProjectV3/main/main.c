@@ -80,5 +80,5 @@ void app_main(void) {
     //                                              |
     //                                             \|/
     
-    
+    xTaskCreate(display_task, "DISPLAY_TASK", 4092, NULL, 10, NULL);
 }   

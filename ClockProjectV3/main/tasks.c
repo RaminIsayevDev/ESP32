@@ -8,7 +8,7 @@
 #include "nvs_flash.h"
 #include "lwip/apps/sntp.h"
 #include "driver/gpio.h"
-#include "driver"
+#include "driver/i2c_master.h"
 #include "esp_timer.h"
 
 // functions 
@@ -120,7 +120,6 @@ void create_main_screen(void) {
     main_screen = lv_obj_create(NULL);
 
     if (main_screen == NULL) {
-      ESP_LOGE(TAG_SPLASH, "Failed to create splash screen object!");
       xSemaphoreGive(lvgl_mutex); // Освобождаем мьютекс при ошибке
       return;
     }
@@ -151,6 +150,7 @@ void create_main_screen(void) {
 
     lv_obj_align_to(temp_label, NULL, LV_ALIGN_TOP_RIGHT, 0, 0);
   }
+  xSemaphoreGive(lvgl_mutex); // Освобождаем мьютекс после создания главного экрана
 }
 // Handlers
 
@@ -337,6 +337,7 @@ void RTC_Task(void* pvParameters) {
 }
 
 void display_task(void* pvParameters) {
+  struct toDisplay_data from_RTC; 
   display_restart();
 
   lv_init();
@@ -349,7 +350,7 @@ void display_task(void* pvParameters) {
     return;
   }
 
-  static uint8_t buf[160 * 128 / 10 * 2];
+  static uint8_t buf[160 * 128 / 10 * 2];s
   lv_display_set_buffers(display, buf, NULL, LV_DISPLAY_RENDER_MODE_PARTIAL);
 
 
@@ -363,6 +364,10 @@ void display_task(void* pvParameters) {
   xTaskCreate(lvgl_main_task, "LVGL_TIMER_HANDLER", 4092, NULL, 10, NULL);
   
   while(1) {
-    
+    if (xQueueReceive(toDisplay_Queue, &from_RTC, portMAX_DELAY) == pdTRUE) {
+      if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
+        
+      }
+    }
   }
 }
