@@ -5,7 +5,6 @@
 #include "freertos/queue.h"
 
 #include "lvgl.h"
-#include "st7735s.h"
 #include "driver/gpio.h"
 #include "freertos/semphr.h"
 #include "driver/i2c_master.h"
@@ -63,6 +62,14 @@ struct toDisplay_data {
 extern const char *TAG;
 extern const char *TAG_IP;
 extern const char *TAG_SPLASH;
+
+// For main_screen
+
+extern lv_obj_t *main_screen;
+extern lv_obj_t *clock_label;
+extern lv_obj_t *temp_label;
+extern lv_style_t clock_label_style;
+extern lv_style_t temp_label_style;
 
 // Flag for control SNTP_start
 

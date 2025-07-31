@@ -8,10 +8,7 @@
 #include "nvs_flash.h"
 #include "lwip/apps/sntp.h"
 #include "driver/gpio.h"
-#include "driver/i2c_master.h"
-#include "ui_helpers.h"
-#include "ui_Screen1.h"
-#include "ui_comp.h"
+#include "driver"
 #include "esp_timer.h"
 
 // functions 
@@ -77,10 +74,11 @@ void display_restart(void) {
 
 void create_splash_screen(void) {
   ESP_LOGI(TAG_SPLASH, "Creating splash screen...");
+  lv_obj_t *splash_screen;
 
   if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
     // 1. Создаем новый экран LVGL для приветствия
-    lv_obj_t *splash_screen = lv_obj_create(NULL); // NULL означает, что это будет новый экран
+    splash_screen = lv_obj_create(NULL); // NULL означает, что это будет новый экран
     if (splash_screen == NULL) {
         ESP_LOGE(TAG_SPLASH, "Failed to create splash screen object!");
         xSemaphoreGive(lvgl_mutex); // Освобождаем мьютекс при ошибке
@@ -110,8 +108,50 @@ void create_splash_screen(void) {
   ESP_LOGI(TAG_SPLASH, "Splash screen displayed.");
 
   vTaskDelay(pdMS_TO_TICKS(3000)); // Задержка 3 секунды
+
+  if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
+    lv_obj_delete(splash_screen);
+    xSemaphoreGive(lvgl_mutex);
+  }
 }
 
+void create_main_screen(void) {
+  if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY == pdTRUE)) {
+    main_screen = lv_obj_create(NULL);
+
+    if (main_screen == NULL) {
+      ESP_LOGE(TAG_SPLASH, "Failed to create splash screen object!");
+      xSemaphoreGive(lvgl_mutex); // Освобождаем мьютекс при ошибке
+      return;
+    }
+
+    lv_obj_set_style_bg_color(main_screen, lv_color_black(), LV_PART_MAIN);
+
+    // For clock label
+
+    lv_style_init(&clock_label_style);
+    lv_style_set_text_font(&clock_label_style, &LV_FONT_MONTSERRAT_26);
+
+    clock_label = lv_label_create(main_screen);
+    lv_label_set_text(clock_label, "00:00");
+    lv_obj_set_style_text_color(clock_label, lv_color_white, LV_PART_MAIN);
+    lv_obj_add_style(clock_label, &clock_label_style, 0);
+
+    lv_obj_align(clock_label, LV_ALIGN_CENTER, 0, 0);
+
+    // For temperature label
+
+    lv_style_init(&temp_label_style);
+    lv_style_set_text_font(&temp_label_style, &LV_FONT_MONTSERRAT_14);
+
+    temp_label = lv_label_create(main_screen);
+    lv_label_set_text(temp_label, "0 °C");
+    lv_obj_set_style_text_color(temp_label, lv_color_white, LV_PART_MAIN);
+    lv_obj_add_style(temp_label, &temp_label_style, 0);
+
+    lv_obj_align_to(temp_label, NULL, LV_ALIGN_TOP_RIGHT, 0, 0);
+  }
+}
 // Handlers
 
 void my_wifi_connected_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -318,6 +358,7 @@ void display_task(void* pvParameters) {
 
   create_splash_screen();
 
+  
   while(1) {
     
   }
