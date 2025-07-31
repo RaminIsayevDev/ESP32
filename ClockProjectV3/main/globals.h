@@ -7,23 +7,33 @@
 #include "lvgl.h"
 #include "st7735s.h"
 #include "driver/gpio.h"
+#include "freertos/semphr.h"
+#include "driver/i2c_master.h"
 
 #include "stdbool.h"
 
+static SemaphoreHandle_t lvgl_mutex;
+
+#define lvgl_safe_call(code_block)                  \
+    do {                                            \
+        if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY)) { \
+            code_block;                             \
+            xSemaphoreGive(lvgl_mutex);    \
+        }                                           \
+    } while (0)
+
+extern spi_device_handle_t display_spi_handle;
+
+extern i2c_master_bus_handle_t i2c_bus;
 // Queue
 
 extern QueueHandle_t toDisplay_Queue;
 extern QueueHandle_t SNTP_to_RTC_Queue;
 
-// Buffers
-
-#define DISP_BUF_LINES 40
-#define LVGL_BUF_SIZE (LV_HOR_RES_MAX * DISP_BUF_LINES)
-
 // define pins for SPI
 
 #define SCLK_PIN 18
-#define MISO_PIN 19
+#define MISO_PIN -1
 #define MOSI_PIN 23
 #define CS_PIN 5
 #define RST_PIN 16
@@ -35,10 +45,6 @@ extern QueueHandle_t SNTP_to_RTC_Queue;
 #define SDA_PIN GPIO_NUM_21
 #define SCL_PIN GPIO_NUM_22
 
-// Displey driver
-
-extern lv_disp_drv_t disp_drv;
-
 // Define structures and arrays
 
 extern const uint8_t GAMMA_P_ARRAY[];
@@ -46,30 +52,17 @@ extern const uint8_t GAMMA_N_ARRAY[];
 
 // Data for the toDisplay_Queue
 
-typedef enum {
-    DISPLAY_WIFI_STATUS,
-    DISPLAY_CLOCK_TEMP
-} DisplayMessageType;
-
-typedef struct {
-    DisplayMessageType type;
-    union {
-        struct {
-            bool connected;
-            char ssid[32];
-        } wifi_status;
-
-        struct {
-            char time[16];  // "12:34:56"
-            char temp[16];  // "23.5 C"
-        } clock_temp;
-    } data;
-} DisplayMessage;
+struct toDisplay_data {
+    int hour;
+    int min;
+    float temp;
+};
 
 // Tags
 
 extern const char *TAG;
 extern const char *TAG_IP;
+extern const char *TAG_SPLASH;
 
 // Flag for control SNTP_start
 

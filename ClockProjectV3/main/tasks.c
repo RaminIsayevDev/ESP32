@@ -1,7 +1,6 @@
 #include "tasks.h"
 #include "esp_err.h"
 #include "lvgl.h"
-#include "st7735s.h"
 #include "globals.h"
 #include "esp-idf-ds3231.h"
 #include "esp_wifi.h"
@@ -10,12 +9,108 @@
 #include "lwip/apps/sntp.h"
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
-
-i2c_master_bus_handle_t i2c_bus = NULL;
+#include "ui_helpers.h"
+#include "ui_Screen1.h"
+#include "ui_comp.h"
+#include "esp_timer.h"
 
 // functions 
 
+uint32_t lv_tick_cb(void)
+{
+    return esp_timer_get_time() / 1000;
+}
 
+void my_st7735_send_cmd(uint8_t cmd_val) {
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));       // Очистить структуру транзакции
+
+    t.length = 8;                   // Команда всегда 8 бит
+    t.tx_buffer = &cmd_val;         // Указатель на буфер с командой
+    t.user = (void*)0;              // Передаем 0 в t.user -> pre_cb установит D/C в режим "команда" (0)
+
+    // Отправляем транзакцию по SPI
+    spi_device_transmit(display_spi_handle, &t);
+}
+
+void my_st7735_send_color(const uint8_t *data_buf, uint32_t len_bytes) {
+    spi_transaction_t *t; 
+
+    t = (spi_transaction_t *)heap_caps_malloc(sizeof(spi_transaction_t), MALLOC_CAP_DMA);
+    if (t == NULL) {
+        // Обработка ошибки, если не удалось выделить память
+        ESP_LOGE("ST7735", "Failed to allocate SPI transaction");
+        return;
+    }
+    memset(t, 0, sizeof(spi_transaction_t)); // Очистить структуру транзакции
+
+    t->length = len_bytes * 8;       // Длина в битах
+    t->tx_buffer = data_buf;         // Указатель на буфер с данными пикселей
+    t->user = (void*)1;              // D/C = DATA
+
+    // Запуск асинхронной передачи. Функция возвращает сразу.
+    // Передача будет происходить в фоновом режиме через DMA.
+    ESP_ERROR_CHECK(spi_device_queue_trans(display_spi_handle, t, portMAX_DELAY));
+}
+
+void st7735s_send_gamma_profile( const uint8_t *gamma_pos, size_t gamma_pos_len,
+                                 const uint8_t *gamma_neg, size_t gamma_neg_len)
+{
+    my_st7735_send_cmd(0xE0);
+    my_st7735_send_color(gamma_pos, gamma_pos_len);
+
+    my_st7735_send_cmd(0xE1);
+    my_st7735_send_color(gamma_neg, gamma_neg_len);
+}
+
+void st7735s_spi_pre_transfer_callback(spi_transaction_t *t) {
+    int dc = (int)t->user; // Получаем значение, которое мы передали в t->user
+    gpio_set_level(DC_PIN, dc);
+}
+
+void display_restart(void) {
+  gpio_set_level(RST_PIN, 0); // Active low reset
+  vTaskDelay(pdMS_TO_TICKS(100)); // Hold low for a bit
+  gpio_set_level(RST_PIN, 1); // Release reset
+  vTaskDelay(pdMS_TO_TICKS(100)); 
+}
+
+void create_splash_screen(void) {
+  ESP_LOGI(TAG_SPLASH, "Creating splash screen...");
+
+  if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
+    // 1. Создаем новый экран LVGL для приветствия
+    lv_obj_t *splash_screen = lv_obj_create(NULL); // NULL означает, что это будет новый экран
+    if (splash_screen == NULL) {
+        ESP_LOGE(TAG_SPLASH, "Failed to create splash screen object!");
+        xSemaphoreGive(lvgl_mutex); // Освобождаем мьютекс при ошибке
+        return;
+    }
+    lv_obj_set_style_bg_color(splash_screen, lv_color_black(), LV_PART_MAIN); // Черный фо
+    // 2. Добавляем элементы на приветственный экра
+    // Пример: Добавление текста
+    lv_obj_t *label = lv_label_create(splash_screen);
+    if (label == NULL) {
+        ESP_LOGE(TAG_SPLASH, "Failed to create label object!");
+        lv_obj_del(splash_screen); // Удаляем уже созданный экран
+        xSemaphoreGive(lvgl_mutex); // Освобождаем мьютекс при ошибке
+        return;
+    }
+    lv_label_set_text(label, "Загрузка...");
+    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_center(label); // Выравниваем текст по центр
+    // 3. Устанавливаем этот экран как активный
+    lv_disp_load_scr(splash_screen); // Загружаем приветственный экран
+    xSemaphoreGive(lvgl_mutex); // *** ОСВОБОЖДАЕМ МЬЮТЕКС ПЕРЕД БЛОКИРУЮЩЕЙ ЗАДЕРЖКОЙ ***
+    } else {
+      ESP_LOGE(TAG_SPLASH, "Failed to take LVGL mutex for splash screen creation!");
+      return; // Выходим, если не удалось взять мьютекс
+    }
+
+  ESP_LOGI(TAG_SPLASH, "Splash screen displayed.");
+
+  vTaskDelay(pdMS_TO_TICKS(3000)); // Задержка 3 секунды
+}
 
 // Handlers
 
@@ -56,22 +151,7 @@ void my_wifi_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id
 
         // Запускаем SNTP только один раз после получения IP
         if (!sntp_started) {
-
-            //  Sending to Display via toDisplayQueue
-
-            DisplayMessage msg;
-            
-
-            msg.type = DISPLAY_WIFI_STATUS;
-            msg.data.wifi_status.connected = true;
-            strcpy(msg.data.wifi_status.ssid, "ALHN-3405");
-
-            xQueueSend(toDisplay_Queue, &msg, portMAX_DELAY);
-
-            ESP_LOGI(TAG_IP, "Succesfully sent wifi_status to toDisplay_Queue");
-
             // Start sntp_task
-
             sntp_started = true;
             xTaskCreate(sntp_task, "sntp_task", 4096, NULL, 3, NULL);
         }
@@ -81,6 +161,18 @@ void my_wifi_ip_handler(void* arg, esp_event_base_t event_base, int32_t event_id
 }
 
 // Tasks
+
+void lvgl_main_task(void *pvParameter) {
+  (void) pvParameter;
+  while (1) {
+    // Захватываем мьютекс для lv_timer_handler, так как он изменяет состояние LVGL
+    if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
+        lv_timer_handler(); // Обработка всех задач LVGL
+        xSemaphoreGive(lvgl_mutex);
+    }
+    vTaskDelay(pdMS_TO_TICKS(50)); // Небольшая задержка, чтобы не загружать CPU
+  }
+}
 
 void wifi_task(void *pvParameters) {
     // Инициализация NVS
@@ -140,7 +232,7 @@ void sntp_task(void *pvParameters) {
         ESP_LOGI("sntp_task", "Time synchronized: %s", asctime(&timeinfo));
         xQueueSend(SNTP_to_RTC_Queue, &timeinfo, portMAX_DELAY);
         ESP_LOGI("sntp_task", "Succesfully sent the first SNTP data to SNTP_to_RTC_Queue...");
-        xTaskCreate(RTC_Task, "RTC task", 4096, NULL, 4, NULL);
+        xTaskCreate(RTC_Task, "RTC task", 4096, NULL, 6, NULL);
     } else {
         ESP_LOGW("sntp_task", "Failed to synchronize time");
     }
@@ -197,69 +289,36 @@ void RTC_Task(void* pvParameters) {
     free(current_time);
     temp = ds3231_temperature_get(rtc_handle);
     
-    //printf("%04d-%02d-%02d %02d:%02d:%02d Temp: %.1f\n", RTC_timeinfo.tm_year + 1900 /*Add 1900 for better readability*/, RTC_timeinfo.tm_mon + 1,
-    //        RTC_timeinfo.tm_mday, RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, RTC_timeinfo.tm_sec, temp);
+    struct toDisplay_data toDisplay = {RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, temp};
 
-    DisplayMessage msg;
-    msg.type = DISPLAY_CLOCK_TEMP;
-    snprintf(msg.data.clock_temp.time, sizeof(msg.data.clock_temp.time), 
-         "%02d:%02d:%02d", 
-         RTC_timeinfo.tm_hour, 
-         RTC_timeinfo.tm_min, 
-         RTC_timeinfo.tm_sec);
-    snprintf(msg.data.clock_temp.temp, sizeof(msg.data.clock_temp.temp), 
-         "%.1f C", 
-         temp);
-
-    xQueueSend(toDisplay_Queue, &msg, portMAX_DELAY);
+    xQueueSend(toDisplay_Queue, &toDisplay, portMAX_DELAY);
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
 
 void display_task(void* pvParameters) {
-    DisplayMessage msg;
+  display_restart();
 
-    lv_obj_t *screen = lv_scr_act();  // Get current screen
+  lv_init();
+  lv_tick_set_cb(lv_tick_cb);
+  
+  lv_display_t *display = lv_st7735_create(160, 128, LV_LCD_FLAG_BGR_COLOR_MODE, my_st7735_send_cmd, my_st7735_send_color);
 
-    lv_obj_t* wifi_label = lv_label_create(screen);
-    lv_obj_align(wifi_label, LV_ALIGN_TOP_LEFT, 10, 10);
+  if (display == NULL) {
+    ESP_LOGE("LVGL_INIT", "Failed to create LVGL display!");
+    return;
+  }
 
-    lv_obj_t* ssid_label = lv_label_create(screen);
-    lv_obj_align(ssid_label, LV_ALIGN_TOP_LEFT, 10, 30);
+  static uint8_t buf[160 * 128 / 10 * 2];
+  lv_display_set_buffers(display, buf, NULL, LV_DISPLAY_RENDER_MODE_PARTIAL);
 
-    lv_obj_t* clock_label = lv_label_create(screen);
-    lv_obj_align(clock_label, LV_ALIGN_TOP_LEFT, 10, 60);
 
-    lv_obj_t* temp_label = lv_label_create(screen);
-    lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, 10, 80);
 
-    lv_scr_load(screen);
+  // Now let's create UI
 
-    while(1) {
-      // Проверяем, есть ли что-то в очереди (не извлекая)
-      if(uxQueueMessagesWaiting(toDisplay_Queue) > 0) {
-        // Тогда уже достаём сообщение
-        if(xQueueReceive(toDisplay_Queue, &msg, 0) == pdTRUE) {
-          switch (msg.type)
-          {
-          case DISPLAY_WIFI_STATUS:
-            if (msg.data.wifi_status.connected) {
-              lv_label_set_text(wifi_label, "WiFi: Connected");
-              lv_label_set_text(ssid_label, msg.data.wifi_status.ssid);
-            } else {
-              lv_label_set_text(wifi_label, "WiFi: Connecting...");
-            }
-            break;
-          
-          case DISPLAY_CLOCK_TEMP:
-            lv_label_set_text(clock_label, msg.data.clock_temp.time);
-            lv_label_set_text(temp_label, msg.data.clock_temp.temp);
-            break;
-          }
-        }
-      }
+  create_splash_screen();
 
-      lv_timer_handler();  // Process LVGL tasks
-      vTaskDelay(pdMS_TO_TICKS(5));  // Call periodically
-    }
+  while(1) {
+    
+  }
 }

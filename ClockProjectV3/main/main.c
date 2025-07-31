@@ -2,6 +2,7 @@
 #include "freertos/task.h"
 #include <time.h>
 #include "driver/gpio.h"
+#include "drivers/spi_master.h"
 
 #include "esp_err.h"
 #include "lvgl.h"
@@ -14,58 +15,70 @@
 
 #include "globals.h"
 #include "tasks.h"
+#include "ui.h"
 
-void st7735s_send_gamma_profile( const uint8_t *gamma_pos, size_t gamma_pos_len,
-                                 const uint8_t *gamma_neg, size_t gamma_neg_len)
-{
-    st7735s_send_cmd(ST7735_GMCTRP1);
-    st7735s_send_data(gamma_pos, gamma_pos_len);
 
-    st7735s_send_cmd(ST7735_GMCTRN1);
-    st7735s_send_data(gamma_neg, gamma_neg_len);
-}
 
 void app_main(void) {
-    // Слушатель всех event-ов
+    lvgl_mutex = xSemaphoreCreateMutex();
+    toDisplay_Queue = xQueueCreate(10, sizeof(struct toDisplay_data));
+    SNTP_to_RTC_Queue = xQueueCreate(5, sizeof(struct tm));
+
+    // For Events
+
     ESP_ERROR_CHECK(esp_event_loop_create_default());
   
-    // Register event handler after event loop is created
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &my_wifi_connected_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_START, &my_wifi_started_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &my_wifi_disconnected_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &my_wifi_ip_handler, NULL));
 
-    static lv_disp_draw_buf_t draw_buf;      
-    static lv_color_t buf1[LVGL_BUF_SIZE]; 
+    // For SPI init
 
-    DisplayMessage msg;
-    // Create Queues
-    toDisplay_Queue = xQueueCreate(5, sizeof(DisplayMessage));
-    SNTP_to_RTC_Queue = xQueueCreate(5, sizeof(struct tm));
+    spi_bus_config_t bus_config = {
+        .mosi_io_num = MOSI_PIN,
+        .miso_io_num = MISO_PIN,
+        .sclk_io_num = SCLK_PIN,
+        .quadwp_io_num = -1,
+        .quadhd_io_num = -1,
+    };
 
-    lv_init();
+    gpio_config_t io_conf = {};
+    io_conf.pin_bit_mask = (1ULL << DC_PIN) | (1ULL << RST_PIN) | (1ULL << BKL_PIN);
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    gpio_config(&io_conf);
 
-    lvgl_driver_init();
+    spi_device_interface_config_t device_config = {
+        .command_bits = 0,          // Дисплеи ST7735S обычно не используют поле "команда" в SPI-протоколе
+        .address_bits = 0,          // Аналогично, не используют поле "адрес"
+        .dummy_bits = 0,            // Не используют "фиктивные" биты
+        .mode = 0,                  // Режим SPI: CPOL=0, CPHA=0 (может быть 3 в некоторых случаях)
+        .duty_cycle_pos = 128,      // 50% рабочий цикл (по умолчанию)
+        .cs_ena_pretrans = 0,       // Задержка перед активацией CS (не нужна)
+        .cs_ena_posttrans = 0,      // Задержка после деактивации CS (не нужна)
+        .clock_speed_hz = SPI_MASTER_FREQ_40M, // Частота SPI-мастера, например 40 МГц
+        
+        .input_delay_ns = 0,        // Задержка входных данных (MISO не используется)
+        .spics_io_num = CS_PIN, // Пин Chip Select (CS)
+        .flags = 0,                 // Дополнительные флаги (обычно не нужны)
+                                    // Например: SPI_DEVICE_NO_DUMMY
+        .queue_size = 7,            // Размер очереди транзакций. 7 - это хороший баланс.
+        .pre_cb = st7735s_spi_pre_transfer_callback, // Указатель на колбэк перед транзакцией (ОЧЕНЬ ВАЖНО!)
+        .post_cb = NULL,            // Колбэк после транзакции (обычно не нужен)
+    };
+    
+    spi_bus_initialize(SPI3_HOST, &bus_config, SPI_DMA_CH_AUTO);
 
-    st7735s_init();
+    spi_bus_add_device(SPI3_HOST, &device_config, &display_spi_handle);
 
-    lv_disp_draw_buf_init(&draw_buf, &buf1, NULL, LV_HOR_RES_MAX * DISP_BUF_LINES);
+    // Now SPI is initialized
 
-    lv_disp_drv_init(&disp_drv);
-
-    disp_drv.flush_cb = st7735s_flush;
-    disp_drv.hor_res = 160;
-    disp_drv.ver_res = 128;
-    disp_drv.draw_buf = &draw_buf;
-
-    lv_disp_drv_register(&disp_drv);
-
-    st7735s_send_gamma_profile(GAMMA_P_ARRAY, GAMMA_P_ARRAY_LEN, GAMMA_N_ARRAY, GAMMA_N_ARRAY_LEN);
-
-    // А вот теперь можно запускать задачу:
-    xTaskCreate(display_task, "display_task", 6144, NULL, 10, NULL);
-
-    // Create wifi_task
-    xTaskCreate(wifi_task, "Wifi task", 4096, NULL, 8, NULL);
-
-}
+    // We need to create a display TASK below !!!   |
+    //                                              |
+    //                                             \|/
+    
+    
+}   
