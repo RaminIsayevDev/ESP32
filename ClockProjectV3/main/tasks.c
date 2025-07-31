@@ -358,6 +358,9 @@ void display_task(void* pvParameters) {
 
   create_splash_screen();
 
+  create_main_screen();
+
+  xTaskCreate(lvgl_main_task, "LVGL_TIMER_HANDLER", 4092, NULL, 10, NULL);
   
   while(1) {
     
