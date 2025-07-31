@@ -366,8 +366,12 @@ void display_task(void* pvParameters) {
   while(1) {
     if (xQueueReceive(toDisplay_Queue, &from_RTC, portMAX_DELAY) == pdTRUE) {
       if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
-        
+        lv_label_set_text_fmt(clock_label, "%02d:%02d", from_RTC.hour, from_RTC.min);
+        lv_label_set_text_fmt(temp_label, "%.1f °C", from_RTC.temp);
+        lv_obj_invalidate(clock_label); // Обновляем виджет
+        lv_obj_invalidate(temp_label); // Обновляем виджет
       }
+      xSemaphoreGive(lvgl_mutex); // Освобождаем мьютекс после обновления UI
     }
   }
 }
