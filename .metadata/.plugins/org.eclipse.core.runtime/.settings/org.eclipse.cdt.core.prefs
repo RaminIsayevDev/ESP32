@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+environment/workspace/EIM_PATH/delimiter=;
+environment/workspace/EIM_PATH/operation=replace
+environment/workspace/EIM_PATH/value=C\:\\Users\\User\\.espressif\\eim_gui\\eim-gui-windows-x64.exe
+environment/workspace/append=true
+environment/workspace/appendContributed=true

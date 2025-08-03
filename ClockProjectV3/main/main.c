@@ -2,11 +2,11 @@
 #include "freertos/task.h"
 #include <time.h>
 #include "driver/gpio.h"
-#include "drivers/spi_master.h"
+#include "driver/spi_master.h"
 
 #include "esp_err.h"
 #include "lvgl.h"
-#include "st7735s.h"
+#include "../lvgl-9.3.0/src/drivers/display/st7735/lv_st7735.h"
 #include "esp-idf-ds3231.h"
 #include "esp_wifi.h"
 #include "esp_log.h"
@@ -15,7 +15,6 @@
 
 #include "globals.h"
 #include "tasks.h"
-#include "ui.h"
 
 
 
@@ -41,15 +40,8 @@ void app_main(void) {
         .sclk_io_num = SCLK_PIN,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
+        .max_transfer_sz = 160 * 128 * 2 + 8
     };
-
-    gpio_config_t io_conf = {};
-    io_conf.pin_bit_mask = (1ULL << DC_PIN) | (1ULL << RST_PIN) | (1ULL << BKL_PIN);
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    gpio_config(&io_conf);
 
     spi_device_interface_config_t device_config = {
         .command_bits = 0,          // Дисплеи ST7735S обычно не используют поле "команда" в SPI-протоколе

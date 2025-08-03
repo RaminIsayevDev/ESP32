@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.cdt.debug.core.localCoreBuildLaunchConfigType">
+    <stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value=""/>
+    <stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="main"/>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+        <listEntry value="/main"/>
+    </listAttribute>
+    <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+        <listEntry value="4"/>
+    </listAttribute>
+    <stringAttribute key="org.eclipse.launchbar.core.originalName" value="main"/>
+    <stringAttribute key="org.eclipse.launchbar.core.providerClass" value="org.eclipse.cdt.debug.internal.core.launch.CoreBuildLocalLaunchConfigProvider"/>
+</launchConfiguration>

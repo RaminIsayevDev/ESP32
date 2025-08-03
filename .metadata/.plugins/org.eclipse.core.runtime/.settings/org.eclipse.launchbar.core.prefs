@@ -1,0 +1,17 @@
+LaunchTargetManager/configs/ds3231_example=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/configs/ds3231_example_main=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/configs/esp-idf-ds3231=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/configs/lvgl-9.3.0=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/configs/main=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/configs/rlottie=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/configs/rnd_unicodes=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/configs/tests=org.eclipse.launchbar.core.launchTargetType.local\:Local
+LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/arch=x86_64
+LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/name=Local
+LaunchTargetManager/org.eclipse.launchbar.core.launchTargetType.local,Local/os=win32
+configDescList=org.eclipse.cdt.debug.core.coreBuildDescriptorType\:ds3231_example,org.eclipse.cdt.debug.core.coreBuildDescriptorType\:ds3231_example_main,org.eclipse.cdt.debug.core.coreBuildDescriptorType\:esp-idf-ds3231,org.eclipse.cdt.debug.core.coreBuildDescriptorType\:lvgl-9.3.0,org.eclipse.cdt.debug.core.coreBuildDescriptorType\:rlottie,org.eclipse.cdt.debug.core.coreBuildDescriptorType\:rnd_unicodes,org.eclipse.cdt.debug.core.coreBuildDescriptorType\:tests
+eclipse.preferences.version=1
+org.eclipse.cdt.debug.core.coreBuildDescriptorType\:ClockProjectV3/activeLaunchMode=run
+org.eclipse.cdt.debug.core.coreBuildDescriptorType\:ClockProjectV3/activeLaunchTarget=org.eclipse.launchbar.core.launchTargetType.local\:Local
+org.eclipse.cdt.debug.core.coreBuildDescriptorType\:ds3231_example/activeLaunchMode=run
+org.eclipse.cdt.debug.core.coreBuildDescriptorType\:ds3231_example/activeLaunchTarget=org.eclipse.launchbar.core.launchTargetType.local\:Local
