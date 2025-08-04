@@ -182,7 +182,7 @@ void st7735_init_sequence(void) {
     my_st7735_send_color(vmctr1, 1);
 
     // Display inversion
-    my_st7735_send_cmd(0x21); // INVON - включаем инверсию (может улучшить отображение)
+    my_st7735_send_cmd(0x20); // INVON - включаем инверсию (может улучшить отображение)
 
     // Memory access control - важные настройки для правильной ориентации
     my_st7735_send_cmd(0x36); // MADCTL
@@ -285,7 +285,7 @@ void create_splash_screen(void) {
             xSemaphoreGive(lvgl_mutex);
             return;
         }
-        lv_label_set_text(label, "Загрузка...");
+        lv_label_set_text(label, "Downloading...");
         lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
         lv_obj_center(label);
         
@@ -335,7 +335,8 @@ void create_main_screen(void) {
 
         // For clock label
         lv_style_init(&clock_label_style);
-        lv_style_set_text_font(&clock_label_style, LV_FONT_DEFAULT);
+        lv_style_set_text_font(&clock_label_style, &lv_font_montserrat_14);
+        lv_style_set_text_color(&clock_label_style, lv_color_white());
 
         clock_label = lv_label_create(main_screen);
         if (clock_label == NULL) {
@@ -346,13 +347,13 @@ void create_main_screen(void) {
         }
         
         lv_label_set_text(clock_label, "00:00");
-        lv_obj_set_style_text_color(clock_label, lv_color_white(), LV_PART_MAIN);
         lv_obj_add_style(clock_label, &clock_label_style, 0);
         lv_obj_align(clock_label, LV_ALIGN_CENTER, 0, 0);
 
         // For temperature label
         lv_style_init(&temp_label_style);
-        lv_style_set_text_font(&temp_label_style, LV_FONT_DEFAULT);
+        lv_style_set_text_font(&temp_label_style, &lv_font_montserrat_14);
+        lv_style_set_text_color(&temp_label_style, lv_color_white());
 
         temp_label = lv_label_create(main_screen);
         if (temp_label == NULL) {
@@ -364,7 +365,6 @@ void create_main_screen(void) {
         }
         
         lv_label_set_text(temp_label, "0 °C");
-        lv_obj_set_style_text_color(temp_label, lv_color_white(), LV_PART_MAIN);
         lv_obj_add_style(temp_label, &temp_label_style, 0);
         lv_obj_align(temp_label, LV_ALIGN_TOP_RIGHT, -10, 10);
         
