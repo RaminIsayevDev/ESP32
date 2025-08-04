@@ -335,7 +335,7 @@ void create_main_screen(void) {
 
         // For clock label
         lv_style_init(&clock_label_style);
-        lv_style_set_text_font(&clock_label_style, &lv_font_montserrat_14);
+        lv_style_set_text_font(&clock_label_style, &lv_font_montserrat_28);
         lv_style_set_text_color(&clock_label_style, lv_color_white());
 
         clock_label = lv_label_create(main_screen);
