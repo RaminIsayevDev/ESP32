@@ -550,6 +550,7 @@ void RTC_Task(void* pvParameters) {
     struct toDisplay_data toDisplay = {RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, temp};
 
     xQueueSend(toDisplay_Queue, &toDisplay, portMAX_DELAY);
+    ESP_LOGI("RTC_TASK", "Sent to DISPLAY_TASK");
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
@@ -603,6 +604,7 @@ void display_task(void* pvParameters) {
     
     while(1) {
         if (xQueueReceive(toDisplay_Queue, &from_RTC, portMAX_DELAY) == pdTRUE) {
+            ESP_LOGI("DISPLAY_TASK", "Received data to 'from_RTC' from RTC_task");
             if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
                 lv_label_set_text_fmt(clock_label, "%02d:%02d", from_RTC.hour, from_RTC.min);
                 lv_label_set_text_fmt(temp_label, "%.1f °C", from_RTC.temp);
