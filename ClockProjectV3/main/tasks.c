@@ -653,7 +653,13 @@ void display_task(void* pvParameters) {
             if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
                 if (clock_label != NULL && temp_label != NULL) {
                     lv_label_set_text_fmt(clock_label, "%02d:%02d", from_RTC.hour, from_RTC.min);
-                    lv_label_set_text_fmt(temp_label, "%.1f °C", from_RTC.temp);
+                    
+                    // Безопасное форматирование температуры
+                    char temp_str[32];
+                    int temp_int = (int)(from_RTC.temp * 10); // Умножаем на 10 для сохранения одного знака после запятой
+                    snprintf(temp_str, sizeof(temp_str), "%d.%d °C", temp_int / 10, abs(temp_int % 10));
+                    lv_label_set_text(temp_label, temp_str);
+                    
                     lv_obj_invalidate(clock_label);
                     lv_obj_invalidate(temp_label);
                 } else {
