@@ -182,7 +182,7 @@ void st7735_init_sequence(void) {
     my_st7735_send_color(vmctr1, 1);
 
     // Display inversion
-    my_st7735_send_cmd(0x21); // INVON - включаем инверсию (может улучшить отображение)
+    my_st7735_send_cmd(0x20); // INVON - включаем инверсию (может улучшить отображение)
 
     // Memory access control - важные настройки для правильной ориентации
     my_st7735_send_cmd(0x36); // MADCTL
@@ -262,13 +262,14 @@ void init_display_pins(void) {
     ESP_LOGI("DISPLAY_INIT", "Display reset sequence completed");
 }
 
+// Исправленная функция create_splash_screen
 void create_splash_screen(void) {
     ESP_LOGI(TAG_SPLASH, "Creating splash screen...");
     lv_obj_t *splash_screen;
 
     if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
         // 1. Создаем новый экран LVGL для приветствия
-        splash_screen = lv_obj_create(NULL); // NULL означает, что это будет новый экран
+        splash_screen = lv_obj_create(NULL);
         if (splash_screen == NULL) {
             ESP_LOGE(TAG_SPLASH, "Failed to create splash screen object!");
             xSemaphoreGive(lvgl_mutex); 
@@ -284,12 +285,12 @@ void create_splash_screen(void) {
             xSemaphoreGive(lvgl_mutex);
             return;
         }
-        lv_label_set_text(label, "Загрузка...");
+        lv_label_set_text(label, "Downloading...");
         lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
         lv_obj_center(label);
         
         // 3. Устанавливаем этот экран как активный
-        lv_scr_load(splash_screen); // Загружаем приветственный экран
+        lv_scr_load(splash_screen);
         
         xSemaphoreGive(lvgl_mutex);
     } else {
@@ -299,7 +300,14 @@ void create_splash_screen(void) {
 
     ESP_LOGI(TAG_SPLASH, "Splash screen displayed.");
 
-    vTaskDelay(pdMS_TO_TICKS(3000)); // Задержка 3 секунды
+    // ВАЖНО: Даем время LVGL отрендерить экран
+    for (int i = 0; i < 60; i++) { // 3 секунды с обновлениями LVGL
+        vTaskDelay(pdMS_TO_TICKS(50));
+        if (xSemaphoreTake(lvgl_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+            lv_timer_handler();
+            xSemaphoreGive(lvgl_mutex);
+        }
+    }
 
     // Удаляем splash screen
     if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
@@ -309,6 +317,7 @@ void create_splash_screen(void) {
     
     ESP_LOGI(TAG_SPLASH, "Splash screen removed.");
 }
+
 
 void create_main_screen(void) {
     ESP_LOGI("MAIN_SCREEN", "Creating main screen...");
@@ -326,7 +335,8 @@ void create_main_screen(void) {
 
         // For clock label
         lv_style_init(&clock_label_style);
-        lv_style_set_text_font(&clock_label_style, LV_FONT_DEFAULT);
+        lv_style_set_text_font(&clock_label_style, &lv_font_montserrat_14);
+        lv_style_set_text_color(&clock_label_style, lv_color_white());
 
         clock_label = lv_label_create(main_screen);
         if (clock_label == NULL) {
@@ -337,13 +347,13 @@ void create_main_screen(void) {
         }
         
         lv_label_set_text(clock_label, "00:00");
-        lv_obj_set_style_text_color(clock_label, lv_color_white(), LV_PART_MAIN);
         lv_obj_add_style(clock_label, &clock_label_style, 0);
         lv_obj_align(clock_label, LV_ALIGN_CENTER, 0, 0);
 
         // For temperature label
         lv_style_init(&temp_label_style);
-        lv_style_set_text_font(&temp_label_style, LV_FONT_DEFAULT);
+        lv_style_set_text_font(&temp_label_style, &lv_font_montserrat_14);
+        lv_style_set_text_color(&temp_label_style, lv_color_white());
 
         temp_label = lv_label_create(main_screen);
         if (temp_label == NULL) {
@@ -355,7 +365,6 @@ void create_main_screen(void) {
         }
         
         lv_label_set_text(temp_label, "0 °C");
-        lv_obj_set_style_text_color(temp_label, lv_color_white(), LV_PART_MAIN);
         lv_obj_add_style(temp_label, &temp_label_style, 0);
         lv_obj_align(temp_label, LV_ALIGN_TOP_RIGHT, -10, 10);
         
@@ -465,8 +474,9 @@ void wifi_task(void *pvParameters) {
     vTaskDelete(NULL);
 }
 
+// Исправленная функция sntp_task с более частыми обновлениями
 void sntp_task(void *pvParameters) {
-  // Настройка SNTP
+    // Настройка SNTP
     ESP_LOGI("sntp_task", "Initializing SNTP");
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "time.google.com");
@@ -475,7 +485,7 @@ void sntp_task(void *pvParameters) {
     setenv("TZ", "GMT-4", 1);
     tzset();
 
-  // Ожидание синхронизации времени
+    // Ожидание синхронизации времени
     time_t now = 0;
     struct tm timeinfo = { 0 };
     int retry = 0;
@@ -490,71 +500,98 @@ void sntp_task(void *pvParameters) {
     if (timeinfo.tm_year >= (2016 - 1900)) {
         ESP_LOGI("sntp_task", "Time synchronized: %s", asctime(&timeinfo));
         xQueueSend(SNTP_to_RTC_Queue, &timeinfo, portMAX_DELAY);
-        ESP_LOGI("sntp_task", "Succesfully sent the first SNTP data to SNTP_to_RTC_Queue...");
+        ESP_LOGI("sntp_task", "Successfully sent the first SNTP data to SNTP_to_RTC_Queue...");
         xTaskCreate(RTC_Task, "RTC task", 4096, NULL, 6, NULL);
     } else {
         ESP_LOGW("sntp_task", "Failed to synchronize time");
+        // Даже если синхронизация не удалась, запустим RTC с текущим временем
+        xTaskCreate(RTC_Task, "RTC task", 4096, NULL, 6, NULL);
     }
 
+    // Синхронизируем время каждые 10 минут вместо часа для лучшей точности
     while(1) {
-        vTaskDelay(pdMS_TO_TICKS(3600000));  // 3600000 миллисекунд = 1 час
+        vTaskDelay(pdMS_TO_TICKS(600000));  // 600000 миллисекунд = 10 минут
 
         time_t now;
         struct tm timeinfo_updated;
         time(&now);
         localtime_r(&now, &timeinfo_updated); 
-        xQueueSend(SNTP_to_RTC_Queue, &timeinfo_updated, portMAX_DELAY); 
-
-        ESP_LOGI("sntp_task", "Successfully sent updated SNTP data to SNTP_to_RTC_Queue...");
+        
+        // Неблокирующая отправка - если очередь заполнена, пропускаем
+        if (xQueueSend(SNTP_to_RTC_Queue, &timeinfo_updated, 0) == pdTRUE) {
+            ESP_LOGI("sntp_task", "Successfully sent updated SNTP data to SNTP_to_RTC_Queue...");
+        } else {
+            ESP_LOGW("sntp_task", "SNTP_to_RTC_Queue is full, skipping update");
+        }
     }
 }
 
+
+// Исправленная функция RTC_Task
 void RTC_Task(void* pvParameters) {
+    // Allocate memory for the pointer of i2c_master_bus_handle_t
+    i2c_master_bus_handle_t* i2c_bus = (i2c_master_bus_handle_t*)malloc(sizeof(i2c_master_bus_handle_t));
 
-  // Allocte memory for the pointer of i2c_master_bus_handle_t
-  i2c_master_bus_handle_t* i2c_bus = (i2c_master_bus_handle_t*)malloc(sizeof(i2c_master_bus_handle_t));
+    i2c_master_bus_config_t i2c_bus_config = {
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .i2c_port = -1,
+        .scl_io_num = SCL_PIN,
+        .sda_io_num = SDA_PIN,
+        .glitch_ignore_cnt = 7,
+        .flags.enable_internal_pullup = true,
+    };
 
-  i2c_master_bus_config_t i2c_bus_config = {
-    .clk_source = I2C_CLK_SRC_DEFAULT,
-    .i2c_port = -1,
-    .scl_io_num = SCL_PIN,
-    .sda_io_num = SDA_PIN,
-    .glitch_ignore_cnt = 7,
-    .flags.enable_internal_pullup = true,
-  };
+    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, i2c_bus));
 
-  ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, i2c_bus));
+    rtc_handle_t *rtc_handle = ds3231_init(i2c_bus);
 
-  rtc_handle_t *rtc_handle = ds3231_init(i2c_bus);
-
-  if (rtc_handle == NULL) {
-      ESP_LOGE("RTC_Task", "Failed to initialize DS3231");
-      vTaskDelete(NULL); // Завершить задачу, если инициализация не удалась
-      return;
-  }
-
-  while(1) {
-    struct tm RTC_timeinfo;
-    float temp;
-
-    if (xQueueReceive(SNTP_to_RTC_Queue, &RTC_timeinfo, portMAX_DELAY) == pdTRUE) {
-      ESP_LOGI("RTC_Task", "RTC updating from SNTP...");
-      ESP_ERROR_CHECK(ds3231_time_tm_set(rtc_handle, RTC_timeinfo));
+    if (rtc_handle == NULL) {
+        ESP_LOGE("RTC_Task", "Failed to initialize DS3231");
+        vTaskDelete(NULL);
+        return;
     }
 
-    struct tm* current_time = ds3231_time_get(rtc_handle);
-    RTC_timeinfo = *current_time;
-    free(current_time);
-    temp = ds3231_temperature_get(rtc_handle);
-    
-    struct toDisplay_data toDisplay = {RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, temp};
+    // Ждем первоначальную синхронизацию времени от SNTP
+    struct tm RTC_timeinfo;
+    if (xQueueReceive(SNTP_to_RTC_Queue, &RTC_timeinfo, portMAX_DELAY) == pdTRUE) {
+        ESP_LOGI("RTC_Task", "Initial RTC update from SNTP...");
+        ESP_ERROR_CHECK(ds3231_time_tm_set(rtc_handle, RTC_timeinfo));
+    }
 
-    xQueueSend(toDisplay_Queue, &toDisplay, portMAX_DELAY);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
+    // Основной цикл - читаем RTC каждую секунду
+    while(1) {
+        // Проверяем, есть ли обновления от SNTP (неблокирующий вызов)
+        if (xQueueReceive(SNTP_to_RTC_Queue, &RTC_timeinfo, 0) == pdTRUE) {
+            ESP_LOGI("RTC_Task", "Updating RTC from SNTP...");
+            ESP_ERROR_CHECK(ds3231_time_tm_set(rtc_handle, RTC_timeinfo));
+        }
+
+        // Читаем текущее время и температуру с RTC
+        struct tm* current_time = ds3231_time_get(rtc_handle);
+        if (current_time != NULL) {
+            RTC_timeinfo = *current_time;
+            free(current_time);
+            
+            float temp = ds3231_temperature_get(rtc_handle);
+            
+            struct toDisplay_data toDisplay = {RTC_timeinfo.tm_hour, RTC_timeinfo.tm_min, temp};
+            
+            // Отправляем данные на дисплей (неблокирующий вызов)
+            if (xQueueSend(toDisplay_Queue, &toDisplay, 0) == pdTRUE) {
+                ESP_LOGI("RTC_TASK", "Sent to DISPLAY_TASK: %02d:%02d, %.1f°C", 
+                         toDisplay.hour, toDisplay.min, toDisplay.temp);
+            } else {
+                ESP_LOGW("RTC_TASK", "Failed to send to display queue (queue full)");
+            }
+        } else {
+            ESP_LOGE("RTC_Task", "Failed to read time from RTC");
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(1000)); // Обновляем каждую секунду
+    }
 }
 
-// Обновленная функция display_task с улучшенными настройками буфера
+// Исправленная функция display_task
 void display_task(void* pvParameters) {
     struct toDisplay_data from_RTC; 
     
@@ -587,6 +624,14 @@ void display_task(void* pvParameters) {
     // Initialize ST7735 display manually
     st7735_init_sequence();
 
+    ESP_LOGI("DISPLAY_TASK", "Starting background tasks...");
+    
+    // Запускаем LVGL task ДО создания UI
+    xTaskCreate(lvgl_main_task, "LVGL_TIMER_HANDLER", 4096, NULL, 10, NULL);
+    
+    // Даем время LVGL инициализироваться
+    vTaskDelay(pdMS_TO_TICKS(100));
+    
     ESP_LOGI("DISPLAY_TASK", "Creating UI screens...");
     
     // Create and show splash screen first
@@ -595,19 +640,31 @@ void display_task(void* pvParameters) {
     // Create main screen (it will be loaded automatically)
     create_main_screen();
 
-    ESP_LOGI("DISPLAY_TASK", "Starting background tasks...");
-    xTaskCreate(lvgl_main_task, "LVGL_TIMER_HANDLER", 4096, NULL, 10, NULL);
+    // Запускаем Wi-Fi после создания UI
     xTaskCreate(wifi_task, "WIFI_TASK", 4096, NULL, 5, NULL);
     
     ESP_LOGI("DISPLAY_TASK", "Display task initialized, entering main loop...");
     
     while(1) {
         if (xQueueReceive(toDisplay_Queue, &from_RTC, portMAX_DELAY) == pdTRUE) {
+            ESP_LOGI("DISPLAY_TASK", "Received data from RTC_task: %02d:%02d, %.1f°C", 
+                     from_RTC.hour, from_RTC.min, from_RTC.temp);
+            
             if (xSemaphoreTake(lvgl_mutex, portMAX_DELAY) == pdTRUE) {
-                lv_label_set_text_fmt(clock_label, "%02d:%02d", from_RTC.hour, from_RTC.min);
-                lv_label_set_text_fmt(temp_label, "%.1f °C", from_RTC.temp);
-                lv_obj_invalidate(clock_label);
-                lv_obj_invalidate(temp_label);
+                if (clock_label != NULL && temp_label != NULL) {
+                    lv_label_set_text_fmt(clock_label, "%02d:%02d", from_RTC.hour, from_RTC.min);
+                    
+                    // Безопасное форматирование температуры
+                    char temp_str[32];
+                    int temp_int = (int)(from_RTC.temp * 10); // Умножаем на 10 для сохранения одного знака после запятой
+                    snprintf(temp_str, sizeof(temp_str), "%d.%d °C", temp_int / 10, abs(temp_int % 10));
+                    lv_label_set_text(temp_label, temp_str);
+                    
+                    lv_obj_invalidate(clock_label);
+                    lv_obj_invalidate(temp_label);
+                } else {
+                    ESP_LOGW("DISPLAY_TASK", "Labels are not initialized yet");
+                }
                 xSemaphoreGive(lvgl_mutex);
             }
         }
