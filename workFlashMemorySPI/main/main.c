@@ -32,6 +32,8 @@ void app_main(void) {
         .pre_cb = NULL,
     };
 
+    spi_device_handle_t flash_handle;
+
     ret = spi_bus_initialize(SPI3_HOST, &bus_config, SPI_DMA_CH_AUTO);
 
     if (ret != ESP_OK) {
@@ -39,6 +41,6 @@ void app_main(void) {
         return;
     }
 
-    ret = spi_bus_add_device(SPI3_HOST, );
+    ret = spi_bus_add_device(SPI3_HOST, &device_config, &flash_handle);
 
 }
