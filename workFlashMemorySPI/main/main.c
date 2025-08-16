@@ -1,6 +1,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "stdio.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 
@@ -43,4 +44,41 @@ void app_main(void) {
 
     ret = spi_bus_add_device(SPI3_HOST, &device_config, &flash_handle);
 
+    spi_transaction_t t;
+    spi_transaction_t t_status;
+
+    memset(&t, 0, sizeof(t));   // Clear transaction structure
+    memset(&t_status, 0, sizeof(t_status));
+
+    uint8_t tx_data[2] = {0x06, 0xC7};  // Data for send
+
+    uint8_t tx_status_data[1] = {0x05};
+    uint8_t rx_status_data;
+
+    t.length = 8;
+    t.tx_buffer = &tx_data;  // Pointer to transmit data
+    t.rx_buffer = NULL;      // There is no MISO phase
+
+    t_status.length = 8;
+    t_status.tx_buffer = &tx_status_data;
+    t_status.rx_buffer = &rx_status_data;
+
+    ret = spi_device_transmit(flash_handle, &t);
+    if (ret != ESP_OK) {
+        printf("Can't transmit to device...");
+        return;
+    }
+
+    do {
+        vTaskDelay(pdMS_TO_TICKS(100));
+        ret = spi_device_transmit(flash_handle, &t_status);
+
+        if (ret != ESP_OK) {
+            printf("Can't polling for status(transmit)...");
+            return;
+        }
+
+    } while (rx_status_data & 0x01);
+
+    
 }
