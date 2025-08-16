@@ -80,5 +80,5 @@ void app_main(void) {
 
     } while (rx_status_data & 0x01);
 
-    
+    printf("Chip erased succesfully!");
 }
