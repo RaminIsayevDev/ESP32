@@ -2,9 +2,10 @@ dependencies:
   idf:
     source:
       type: idf
-    version: 5.4.2
+    version: 5.5.1
   jschwefel/esp-idf-ds3231:
-    component_hash: ccc75c80386785c254a306585f3f02dd07ce3bd430b025cf3f96b7c954150be6
+    component_hash: 
+      ccc75c80386785c254a306585f3f02dd07ce3bd430b025cf3f96b7c954150be6
     dependencies:
     - name: idf
       require: private
