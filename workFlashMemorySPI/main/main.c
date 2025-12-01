@@ -177,7 +177,7 @@ void app_main(void)
 
     // 1. Check ID
     uint32_t id = flash_read_id();
-    printf("WINBOND ID: 0x%06X\n", (unsigned int)id);
+    printf("JEDEC ID: 0x%06X\n", (unsigned int)id);
     if (id == 0x000000 || id == 0xFFFFFF) {
         printf("ERROR: Flash not detected! Check Wiring (MISO/MOSI/CS/CLK).\n");
         return;
