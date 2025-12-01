@@ -1,3 +1,33 @@
+/*
+    SPI Flash Example
+    This example demonstrates basic SPI flash operations: Read ID, Unprotect, Erase, Write, and Read.
+
+    Note: Ensure correct wiring of MISO, MOSI, CS, and CLK pins.
+*/
+
+/*
+    Algorith of Actions:
+
+        Stage 1: Verify Connection
+            1) Read JEDEC ID (0x9F) to confirm communication with the flash chip.
+
+        Stage 2: Remove Protection
+            1) Remove Write Protection by setting WP and HOLD pins high.
+            2) Check bites BP (Block Protect).
+            3) Removing Protection: Send Write Enable (0x06) followed by Write Status Register (0x01) with 0x00.
+
+        Stage 3: Write Data
+            1) Before any changing operations, send Write Enable (0x06).
+            2) Erase Sector (0x20).
+            3) Wait until the flash is ready (WIP byte = 0).
+            4) Send Write Enable (0x06) again.
+            5) Page Program (0x02) with data.
+            6) Wait until the flash is ready (WIP byte = 0).
+
+        Stage 4: Read Data
+            1) Read Data (0x03) from the flash to verify the written data
+*/
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/spi_master.h"
