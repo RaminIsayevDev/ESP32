@@ -235,7 +235,7 @@ void app_main(void)
     flash_read_data(0x000000, readbuf, 256);
 
     printf("First 8 bytes: ");
-    for (int i = 0; i < 8; i++) printf("%02X ", readbuf[i]);
+    for (int i = 0; i < 32; i++) printf("%02X ", readbuf[i]);
     printf("\n");
 
     if (memcmp(page, readbuf, 256) == 0) {

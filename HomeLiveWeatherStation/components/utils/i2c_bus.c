@@ -2,6 +2,8 @@
 #include "esp_log.h"
 #include "driver/i2c.h"
 
+#include "i2c_bus.h"
+
 #define I2C_MASTER_SCL_IO 22
 #define I2C_MASTER_SDA_IO 21
 #define I2C_MASTER_NUM 0
@@ -9,7 +11,7 @@
 
 static const char *TAG = "I2C-SCANNER";
 
-static esp_err_t i2c_master_init(void)
+esp_err_t i2c_master_init(void)
 {
     int i2c_master_port = I2C_MASTER_NUM;
 
@@ -31,7 +33,8 @@ static esp_err_t i2c_master_init(void)
 
     // 2. Устанавливаем драйвер
     // Аргументы: порт, режим, размер буфера RX, размер буфера TX, флаги прерываний
-    return i2c_driver_install(i2c_master_port, conf.mode, 
-                              I2C_MASTER_RX_BUF_DISABLE, 
-                              I2C_MASTER_TX_BUF_DISABLE, 0);
+    return i2c_driver_install(i2c_master_port, conf.mode,
+                              0,  // RX буфер (0 для Master)
+                              0,  // TX буфер (0 для Master)
+                              0); // Флаги (0 = по умолчанию)
 }
