@@ -6,10 +6,14 @@
 #include "esp_system.h"
 
 #include "sensor_bme280_init.h"
+#include "sensor_bme280_read_data.h"
 
 #define I2C_MASTER_NUM 0  // Добавлено определение I2C_MASTER_NUM
 
 static const char *TAG = "MAIN";
+
+struct bme280_dev bme280_dev;
+struct bme280_data comp_data;
 
 void app_main(void) {
     // 1. Инициализируем шину
@@ -27,5 +31,9 @@ void app_main(void) {
     }
 
     // 3. Тут можно добавить чтение данных или другие действия
+    while(1) {
+        sensor_bme280_read_data(&bme280_dev, &comp_data);
 
+        bme280_dev.delay_us(1000000, bme280_dev.intf_ptr); // Пауза 1 секунда
+    }
 }

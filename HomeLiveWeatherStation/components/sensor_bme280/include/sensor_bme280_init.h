@@ -7,11 +7,11 @@
 #include "driver/i2c.h"
 #include "esp_system.h"
 
-// global structure
-struct bme280_dev bme280_dev;
-
 // Wrapped function sensor initializing
 esp_err_t bme280_sensor_init(void);
+
+// Глобальная переменная для устройства BME280
+extern struct bme280_dev bme280_dev;
 
 // global tool-functions
 int8_t bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr);

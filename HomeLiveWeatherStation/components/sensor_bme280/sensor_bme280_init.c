@@ -3,8 +3,17 @@
 #include "bme280_defs.h"
 #include "driver/i2c.h"
 #include "esp_system.h"
+#include "rom/ets_sys.h"
 
 #include "sensor_bme280_init.h"
+
+// Если порт I2C не задан в проекте, используем I2C_NUM_0 по умолчанию
+#ifndef I2C_MASTER_NUM
+#define I2C_MASTER_NUM I2C_NUM_0
+#endif
+
+// Локальный тег для логов
+static const char *TAG = "BME280";
 
 // Функции для чтения/записи по I2C (требуются драйвером BME280)
 int8_t bme280_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr) {
@@ -41,7 +50,7 @@ int8_t bme280_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len,
 }
 
 void bme280_delay_us(uint32_t period, void *intf_ptr) {
-    ets_delay_us(period);
+    esp_rom_delay_us(period);
 }
 
 // Ваша функция инициализации BME280
