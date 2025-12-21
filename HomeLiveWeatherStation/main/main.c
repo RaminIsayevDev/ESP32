@@ -1,3 +1,7 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "freertos/event_groups.h"
 #include "i2c_bus.h"
 #include "esp_log.h"
 #include "bme280.h"
@@ -38,17 +42,17 @@ void app_main(void) {
         return;
     }
 
-    // 4. Основной цикл - читаем данные с обоих датчиков
-    while(1) {
-        // Читаем температуру, давление и влажность
-        sensor_bme280_read_data(&bme280_dev, &comp_data);
+    // // 4. Основной цикл - читаем данные с обоих датчиков
+    // while(1) {
+    //     // Читаем температуру, давление и влажность
+    //     sensor_bme280_read_data(&bme280_dev, &comp_data);
         
-        // Читаем уровень освещённости
-        if (bh1750_read_light_level(&bh1750_dev, I2C_MASTER_NUM) == ESP_OK) {
-            uint16_t light_level = bh1750_get_light_level(&bh1750_dev);
-            ESP_LOGI(TAG, "Light level: %d lux", light_level);
-        }
+    //     // Читаем уровень освещённости
+    //     if (bh1750_read_light_level(&bh1750_dev, I2C_MASTER_NUM) == ESP_OK) {
+    //         uint16_t light_level = bh1750_get_light_level(&bh1750_dev);
+    //         ESP_LOGI(TAG, "Light level: %d lux", light_level);
+    //     }
         
-        vTaskDelay(pdMS_TO_TICKS(60000));
-    }
+    //     vTaskDelay(pdMS_TO_TICKS(60000));
+    // }
 }

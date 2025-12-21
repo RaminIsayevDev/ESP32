@@ -70,6 +70,7 @@ esp_err_t bh1750_read_light_level(bh1750_t *dev, uint8_t i2c_num) {
     dev->light_level = ((data[0] << 8) | data[1]) / 1.2;
     
     return ESP_OK;
+    // TODO: returning LIGHT_LEVEL data
 }
 
 /**
