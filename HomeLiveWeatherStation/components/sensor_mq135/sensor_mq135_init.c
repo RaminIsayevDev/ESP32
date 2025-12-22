@@ -8,7 +8,7 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "driver/i2c.h"
 
-#include "sensor_mq135.h"
+#include "sensor_mq135_init.h"
 
 esp_err_t sensor_mq135_init() {
     adc_oneshot_unit_handle_t adc1_handle;
