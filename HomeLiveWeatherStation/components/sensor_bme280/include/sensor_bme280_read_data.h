@@ -5,6 +5,6 @@
 
 extern struct bme280_data comp_data;
 
-void sensor_bme280_read_data(struct bme280_dev *dev, struct bme280_data *comp_data);
+bme280_data sensor_bme280_read_data(struct bme280_dev *dev, struct bme280_data *comp_data);
 
 #endif

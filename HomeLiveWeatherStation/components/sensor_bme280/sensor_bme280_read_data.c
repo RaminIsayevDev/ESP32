@@ -5,10 +5,11 @@
 
 #include "sensor_bme280_read_data.h"
 
-void sensor_bme280_read_data(struct bme280_dev *dev, struct bme280_data *comp_data) {
+bme280_data sensor_bme280_read_data(struct bme280_dev *dev) {
     int8_t rslt;
     uint32_t meas_delay;
     struct bme280_settings settings;
+    struct bme280_data *comp_data;
 
     /* 1. Получаем текущие настройки датчика */
     bme280_get_sensor_settings(&settings, dev);
@@ -36,5 +37,5 @@ void sensor_bme280_read_data(struct bme280_dev *dev, struct bme280_data *comp_da
                  comp_data->temperature, comp_data->humidity, p_mmHg);
     }
     
-    // TODO: RETURNING BME280 DATA
+    return comp_data;
 }
