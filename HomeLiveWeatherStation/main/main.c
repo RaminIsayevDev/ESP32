@@ -8,13 +8,14 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "task_sensors.h"
+#include "wifi_manager.h"
 
 #define I2C_MASTER_NUM 0  // Определение I2C_MASTER_NUM
 
 static const char *TAG = "MAIN";
 
 void app_main(void) {
-
+    wifi_manager_init();
     // Инициализируем шину I2C
     if (i2c_master_init() == ESP_OK) {
         ESP_LOGI(TAG, "I2C bus initialized successfully");
