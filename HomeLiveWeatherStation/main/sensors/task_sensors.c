@@ -46,11 +46,34 @@ static void sensors_task(void *arg) {
     // Получение данных
 
     while (1) {
+        // BME280 - T/H/P
         weather_data = sensor_bme280_read_data(&bme280_dev);
-        light_level = bh1750_read_light_level(&bh1750_dev, I2C_MASTER_NUM);
-        ppm = sensor_mq135_read();
+        if (weather_data.temperature == 0 && weather_data.humidity == 0 && weather_data.pressure == 0) {
+            ESP_LOGE(TAG, "Failed to read data from BME280 sensor");
+            // Values are already 0, so no need to set them
+        }
 
-        ESP_LOGI("SENSORS", "Measured: Temp=%.1f, Hum=%.1f, mmHg=%.1f, Lux=%.1f, ppm=%.1f", weather_data.temperature, weather_data.humidity, weather_data.pressure, (float)light_level, ppm);
+        // BH1750 - Lux
+        if (bh1750_read_light_level(&bh1750_dev, I2C_MASTER_NUM, &light_level) != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to read data from BH1750 sensor");
+            light_level = 0; // Set to 0 on error
+        }
+
+        // MQ135 - Gas
+        ppm = sensor_mq135_read();
+        if (ppm == 0.0) {
+            // This could also mean the sensor is still warming up. The driver handles this,
+            // but a persistent 0.0 after warmup indicates an issue.
+            ESP_LOGW(TAG, "MQ135 sensor returned 0.0 ppm. It might be warming up or there is an issue.");
+        }
+
+        ESP_LOGI("SENSORS", "Measured: Temp=%.1f, Hum=%.1f, mmHg=%.1f, Lux=%u, ppm=%.1f", 
+                 weather_data.temperature, 
+                 weather_data.humidity, 
+                 weather_data.pressure, 
+                 light_level, 
+                 ppm);
+
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
     

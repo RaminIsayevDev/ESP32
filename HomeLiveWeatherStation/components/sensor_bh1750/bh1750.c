@@ -62,9 +62,9 @@ esp_err_t bh1750_init(bh1750_t *dev, uint8_t i2c_num) {
 /**
  * @brief Read light level from BH1750 sensor
  */
-uint16_t bh1750_read_light_level(bh1750_t *dev, uint8_t i2c_num) {
-    if (dev == NULL) {
-        ESP_LOGE(TAG, "Device structure is NULL");
+esp_err_t bh1750_read_light_level(bh1750_t *dev, uint8_t i2c_num, uint16_t *light_level) {
+    if (dev == NULL || light_level == NULL) {
+        ESP_LOGE(TAG, "Device structure or light_level pointer is NULL");
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -83,22 +83,14 @@ uint16_t bh1750_read_light_level(bh1750_t *dev, uint8_t i2c_num) {
     
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to read BH1750: %s", esp_err_to_name(ret));
+        *light_level = 0; // Return 0 on error
         return ret;
     }
     
     // Convert raw data to lux value
     // Formula: lux = (MSB << 8 | LSB) / 1.2
-    dev->light_level = ((data[0] << 8) | data[1]) / 1.2;
+    *light_level = ((data[0] << 8) | data[1]) / 1.2;
+    dev->light_level = *light_level;
     
-    return dev->light_level;
-}
-
-/**
- * @brief Get last read light level
- */
-uint16_t bh1750_get_light_level(bh1750_t *dev) {
-    if (dev == NULL) {
-        return 0;
-    }
-    return dev->light_level;
+    return ESP_OK;
 }
