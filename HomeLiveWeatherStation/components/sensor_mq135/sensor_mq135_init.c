@@ -8,8 +8,11 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "driver/i2c.h"
 #include "sensor_mq135_init.h"
+#include "sensor_mq135.h"
 
-esp_err_t sensor_mq135_init(adc_oneshot_unit_handle_t adc1_handle) {
+static const char *TAG = "MQ135";
+
+esp_err_t sensor_mq135_init() {
     adc_oneshot_unit_init_cfg_t init_config1 = {
         .unit_id = MQ135_ADC_UNIT,
         .clk_src = ADC_RTC_CLK_SRC_DEFAULT

@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
@@ -14,30 +15,47 @@ extern adc_oneshot_unit_handle_t adc1_handle;
 
 float R0 = 76.63;  // Значение калибровки при 20C/33%RH (для воздуха)
 
-// Функция для расчёта сопротивления датчика (с учётом делителя напряжения)
+// Функция для расчёта сопротивления датчика
 static float get_rs(int adc_value) {
-    // Преобразуем ADC значение в напряжение на входе делителя (0-3.3V для ESP32)
-    float V_adc = (adc_value / 4095.0) * 3.3;
-    
-    // Вычисляем напряжение на выходе датчика (до делителя)
-    // V_sensor = V_adc * (R_DIVIDER_SENSOR + R_DIVIDER_GND) / R_DIVIDER_GND
-    float V_sensor = V_adc * (R_DIVIDER_SENSOR + R_DIVIDER_GND) / R_DIVIDER_GND;
-    
-    // Вычисляем сопротивление датчика по закону Ома
-    // RS = RL * (V_supply - V_sensor) / V_sensor
-    float RS = RL_VALUE * (V_SENSOR_MAX - V_sensor) / V_sensor;
-    
-    return RS;
+    // Преобразуем ADC значение в напряжение (0-3.3V для ESP32)
+    float v_adc = ((float)adc_value / 4095.0) * 3.3;
+
+    // Вычисляем сопротивление датчика Rs, предполагая что V_supply = 3.3V и нет внешнего делителя
+    // Rs = RL * (V_supply - V_out) / V_out
+    if (v_adc < 0.01) { // Избегаем деления на ноль или слишком малые значения
+        return -1.0; // Возвращаем ошибку/невалидное значение
+    }
+    float rs = RL_VALUE * (3.3 - v_adc) / v_adc;
+    return rs;
 }
 
 // Функция для расчёта концентрации CO2 (ppm)
 static float calculate_ppm(float rs) {
+    if (rs < 0) return 0.0; // Не считать, если rs невалидно
 	float ratio = rs / R0;
+	if (ratio <= 0) return 0.0; // Избегаем проблем с log/pow
 	float ppm = PARA_A * pow(ratio, PARA_B);
 	return ppm;
 }
 
 float sensor_mq135_read() {
+    static bool is_warming_up = true;
+    static int64_t start_time = 0;
+    
+    if (start_time == 0) {
+        ESP_LOGI(TAG, "MQ135 sensor warming up for 90 seconds...");
+        start_time = esp_timer_get_time();
+    }
+
+    if (is_warming_up) {
+        if ((esp_timer_get_time() - start_time) < (90 * 1000 * 1000)) {
+            return 0.0; // Возвращаем 0 во время прогрева
+        } else {
+            ESP_LOGI(TAG, "MQ135 sensor warm-up complete.");
+            is_warming_up = false;
+        }
+    }
+
 	int adc_reading = 0;
     
 	// Читаем значение с ADC
@@ -53,8 +71,7 @@ float sensor_mq135_read() {
 	// Вычисляем концентрацию CO2
 	float ppm = calculate_ppm(rs);
     
-	ESP_LOGI(TAG, "ADC: %d, RS: %.2f kOhm, CO2: %.2f ppm", adc_reading, rs, ppm);
+	// ESP_LOGI(TAG, "ADC: %d, RS: %.2f kOhm, PPM: %.2f", adc_reading, rs, ppm);
     
 	return ppm;
-    
 }

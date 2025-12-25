@@ -1,6 +1,5 @@
 idf_component_register(
-    SRCS "main.c"
-    SRC_DIRS "sensors"
+    SRCS "main.c" "sensors/task_sensors.c"
     INCLUDE_DIRS "." "sensors"
-    REQUIRES utils sensor_bme280 sensor_bh1750
+    REQUIRES utils sensor_bme280 sensor_bh1750 sensor_mq135
 )

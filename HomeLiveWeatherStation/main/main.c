@@ -5,6 +5,9 @@
 #include "i2c_bus.h"
 #include "driver/i2c.h"
 #include "esp_system.h"
+#include "esp_log.h"
+#include "esp_err.h"
+#include "task_sensors.h"
 
 #define I2C_MASTER_NUM 0  // Определение I2C_MASTER_NUM
 
@@ -20,7 +23,6 @@ void app_main(void) {
         return;
     }
 
-    
-
+    sensors_init();
     
 }

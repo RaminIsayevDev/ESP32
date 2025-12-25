@@ -31,7 +31,7 @@ typedef struct {
 
 /* Function prototypes */
 esp_err_t bh1750_init(bh1750_t *dev, uint8_t i2c_num);
-esp_err_t bh1750_read_light_level(bh1750_t *dev, uint8_t i2c_num);
+uint16_t bh1750_read_light_level(bh1750_t *dev, uint8_t i2c_num);
 uint16_t bh1750_get_light_level(bh1750_t *dev);
 
 #ifdef __cplusplus

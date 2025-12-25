@@ -2,6 +2,9 @@
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 static const char *TAG = "BH1750";
 
 /**
@@ -17,23 +20,41 @@ esp_err_t bh1750_init(bh1750_t *dev, uint8_t i2c_num) {
     dev->mode = BH1750_CONTINUOUS_HIGH_RES;
     dev->light_level = 0;
 
-    // Configure sensor for continuous high resolution mode
-    uint8_t cmd = dev->mode;
-    
+    // --- 1. Power on the sensor ---
+    uint8_t power_on_cmd = 0x01;
     i2c_cmd_handle_t cmd_handle = i2c_cmd_link_create();
     i2c_master_start(cmd_handle);
     i2c_master_write_byte(cmd_handle, (dev->i2c_addr << 1) | I2C_MASTER_WRITE, true);
-    i2c_master_write_byte(cmd_handle, cmd, true);
+    i2c_master_write_byte(cmd_handle, power_on_cmd, true);
     i2c_master_stop(cmd_handle);
     
     esp_err_t ret = i2c_master_cmd_begin(i2c_num, cmd_handle, pdMS_TO_TICKS(1000));
     i2c_cmd_link_delete(cmd_handle);
     
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize BH1750: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "Failed to power on BH1750: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    vTaskDelay(pdMS_TO_TICKS(10)); // Wait a bit after power on
+
+    // --- 2. Configure sensor for continuous high resolution mode ---
+    uint8_t mode_cmd = dev->mode;
+    cmd_handle = i2c_cmd_link_create();
+    i2c_master_start(cmd_handle);
+    i2c_master_write_byte(cmd_handle, (dev->i2c_addr << 1) | I2C_MASTER_WRITE, true);
+    i2c_master_write_byte(cmd_handle, mode_cmd, true);
+    i2c_master_stop(cmd_handle);
+
+    ret = i2c_master_cmd_begin(i2c_num, cmd_handle, pdMS_TO_TICKS(1000));
+    i2c_cmd_link_delete(cmd_handle);
+
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set mode for BH1750: %s", esp_err_to_name(ret));
         return ret;
     }
     
+    // Wait for sensor to complete first measurement
+    vTaskDelay(pdMS_TO_TICKS(200));
     ESP_LOGI(TAG, "BH1750 initialized successfully");
     return ESP_OK;
 }
