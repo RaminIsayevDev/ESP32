@@ -9,6 +9,7 @@
 #include "esp_err.h"
 #include "task_sensors.h"
 #include "wifi_manager.h"
+#include "app_mqtt.h"
 
 #define I2C_MASTER_NUM 0  // Определение I2C_MASTER_NUM
 
@@ -25,5 +26,6 @@ void app_main(void) {
     }
 
     sensors_init();
+    mqtt_app_start();
     
 }
