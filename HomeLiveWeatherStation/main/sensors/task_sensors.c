@@ -103,7 +103,7 @@ static void sensors_task(void *arg) {
         }
 
 
-        vTaskDelay(pdMS_TO_TICKS(10000));
+        vTaskDelay(pdMS_TO_TICKS(300000));
     }
 }
 
