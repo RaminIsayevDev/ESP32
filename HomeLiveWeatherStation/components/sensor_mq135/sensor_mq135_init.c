@@ -12,6 +12,8 @@
 
 static const char *TAG = "MQ135";
 
+adc_oneshot_unit_handle_t adc1_handle = NULL;
+
 esp_err_t sensor_mq135_init() {
     adc_oneshot_unit_init_cfg_t init_config1 = {
         .unit_id = MQ135_ADC_UNIT,

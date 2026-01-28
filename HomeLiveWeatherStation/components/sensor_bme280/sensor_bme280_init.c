@@ -83,8 +83,8 @@ esp_err_t bme280_sensor_init(void) {
         return ESP_FAIL;
     }
 
-    // Перевод в нормальный режим
-    rslt = bme280_set_sensor_mode(BME280_POWERMODE_NORMAL, &bme280_dev);
+    // Перевод в режим сна (Sleep mode), так как мы используем Forced mode для чтения по требованию
+    rslt = bme280_set_sensor_mode(BME280_POWERMODE_SLEEP, &bme280_dev);
     if (rslt != BME280_OK) {
         ESP_LOGE(TAG, "BME280 mode set failed: %d", rslt);
         return ESP_FAIL;

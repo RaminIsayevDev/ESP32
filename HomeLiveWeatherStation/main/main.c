@@ -25,8 +25,8 @@ void app_main(void) {
         return;
     }
 
-    sensors_init();
     mqtt_app_start();
+    sensors_init();
     
     while (1) {
         vTaskDelay(portMAX_DELAY);
