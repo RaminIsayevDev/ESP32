@@ -1,9 +1,9 @@
 #ifndef SPI_INIT_H
 #define SPI_INIT_H
-#include "st7735s.h"
 
-esp_err_t spi_init();
-void my_spi_write_cmd(uint8_t cmd);
-void my_spi_write_data(uint8_t data);
+#include <esp_err.h>
 
-#endif // SPI_INIT_H  
+// Function prototypes for SPI initialization
+esp_err_t init_spi_bus(void);
+
+#endif // SPI_INIT_H
